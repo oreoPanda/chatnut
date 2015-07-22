@@ -27,6 +27,7 @@
 *.i*86
 *.x86_64
 *.hex
+src/chatnut
 
 # Debug files
 *.dSYM/
@@ -39,3 +40,12 @@ nbproject/
 
 # gedit backup files
 *~
+
+# files created by ./configure
+config.h
+config.log
+config.status
+Makefile
+stamp-h1
+src/Makefile
+src/.deps

@@ -86,7 +86,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = message_client$(EXEEXT)
+bin_PROGRAMS = chatnut$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -99,13 +99,12 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_message_client_OBJECTS = message_client-message_client.$(OBJEXT) \
-	message_client-getch.$(OBJEXT) \
-	message_client-socketlayer.$(OBJEXT)
-message_client_OBJECTS = $(am_message_client_OBJECTS)
-message_client_LDADD = $(LDADD)
-message_client_LINK = $(CCLD) $(message_client_CFLAGS) $(CFLAGS) \
-	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+am_chatnut_OBJECTS = chatnut-chatnut.$(OBJEXT) chatnut-getch.$(OBJEXT) \
+	chatnut-socketlayer.$(OBJEXT)
+chatnut_OBJECTS = $(am_chatnut_OBJECTS)
+chatnut_LDADD = $(LDADD)
+chatnut_LINK = $(CCLD) $(chatnut_CFLAGS) $(CFLAGS) $(chatnut_LDFLAGS) \
+	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -138,8 +137,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(message_client_SOURCES)
-DIST_SOURCES = $(message_client_SOURCES)
+SOURCES = $(chatnut_SOURCES)
+DIST_SOURCES = $(chatnut_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -250,8 +249,9 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-message_client_CFLAGS = -std=c99 `pkg-config --cflags --libs gtk+-3.0`
-message_client_SOURCES = message_client.c messaging.h getch.c getch.h socketlayer.c socketprx.h
+chatnut_CFLAGS = -std=c99 `pkg-config --cflags gtk+-3.0`
+chatnut_SOURCES = chatnut.c getch.c socketlayer.c
+chatnut_LDFLAGS = `pkg-config --libs gtk+-3.0`
 all: all-am
 
 .SUFFIXES:
@@ -328,9 +328,9 @@ uninstall-binPROGRAMS:
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
 
-message_client$(EXEEXT): $(message_client_OBJECTS) $(message_client_DEPENDENCIES) $(EXTRA_message_client_DEPENDENCIES) 
-	@rm -f message_client$(EXEEXT)
-	$(AM_V_CCLD)$(message_client_LINK) $(message_client_OBJECTS) $(message_client_LDADD) $(LIBS)
+chatnut$(EXEEXT): $(chatnut_OBJECTS) $(chatnut_DEPENDENCIES) $(EXTRA_chatnut_DEPENDENCIES) 
+	@rm -f chatnut$(EXEEXT)
+	$(AM_V_CCLD)$(chatnut_LINK) $(chatnut_OBJECTS) $(chatnut_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -338,9 +338,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/message_client-getch.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/message_client-message_client.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/message_client-socketlayer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chatnut-chatnut.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chatnut-getch.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chatnut-socketlayer.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -356,47 +356,47 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
-message_client-message_client.o: message_client.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(message_client_CFLAGS) $(CFLAGS) -MT message_client-message_client.o -MD -MP -MF $(DEPDIR)/message_client-message_client.Tpo -c -o message_client-message_client.o `test -f 'message_client.c' || echo '$(srcdir)/'`message_client.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/message_client-message_client.Tpo $(DEPDIR)/message_client-message_client.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='message_client.c' object='message_client-message_client.o' libtool=no @AMDEPBACKSLASH@
+chatnut-chatnut.o: chatnut.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-chatnut.o -MD -MP -MF $(DEPDIR)/chatnut-chatnut.Tpo -c -o chatnut-chatnut.o `test -f 'chatnut.c' || echo '$(srcdir)/'`chatnut.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chatnut-chatnut.Tpo $(DEPDIR)/chatnut-chatnut.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='chatnut.c' object='chatnut-chatnut.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(message_client_CFLAGS) $(CFLAGS) -c -o message_client-message_client.o `test -f 'message_client.c' || echo '$(srcdir)/'`message_client.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-chatnut.o `test -f 'chatnut.c' || echo '$(srcdir)/'`chatnut.c
 
-message_client-message_client.obj: message_client.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(message_client_CFLAGS) $(CFLAGS) -MT message_client-message_client.obj -MD -MP -MF $(DEPDIR)/message_client-message_client.Tpo -c -o message_client-message_client.obj `if test -f 'message_client.c'; then $(CYGPATH_W) 'message_client.c'; else $(CYGPATH_W) '$(srcdir)/message_client.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/message_client-message_client.Tpo $(DEPDIR)/message_client-message_client.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='message_client.c' object='message_client-message_client.obj' libtool=no @AMDEPBACKSLASH@
+chatnut-chatnut.obj: chatnut.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-chatnut.obj -MD -MP -MF $(DEPDIR)/chatnut-chatnut.Tpo -c -o chatnut-chatnut.obj `if test -f 'chatnut.c'; then $(CYGPATH_W) 'chatnut.c'; else $(CYGPATH_W) '$(srcdir)/chatnut.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chatnut-chatnut.Tpo $(DEPDIR)/chatnut-chatnut.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='chatnut.c' object='chatnut-chatnut.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(message_client_CFLAGS) $(CFLAGS) -c -o message_client-message_client.obj `if test -f 'message_client.c'; then $(CYGPATH_W) 'message_client.c'; else $(CYGPATH_W) '$(srcdir)/message_client.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-chatnut.obj `if test -f 'chatnut.c'; then $(CYGPATH_W) 'chatnut.c'; else $(CYGPATH_W) '$(srcdir)/chatnut.c'; fi`
 
-message_client-getch.o: getch.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(message_client_CFLAGS) $(CFLAGS) -MT message_client-getch.o -MD -MP -MF $(DEPDIR)/message_client-getch.Tpo -c -o message_client-getch.o `test -f 'getch.c' || echo '$(srcdir)/'`getch.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/message_client-getch.Tpo $(DEPDIR)/message_client-getch.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='getch.c' object='message_client-getch.o' libtool=no @AMDEPBACKSLASH@
+chatnut-getch.o: getch.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-getch.o -MD -MP -MF $(DEPDIR)/chatnut-getch.Tpo -c -o chatnut-getch.o `test -f 'getch.c' || echo '$(srcdir)/'`getch.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chatnut-getch.Tpo $(DEPDIR)/chatnut-getch.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='getch.c' object='chatnut-getch.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(message_client_CFLAGS) $(CFLAGS) -c -o message_client-getch.o `test -f 'getch.c' || echo '$(srcdir)/'`getch.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-getch.o `test -f 'getch.c' || echo '$(srcdir)/'`getch.c
 
-message_client-getch.obj: getch.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(message_client_CFLAGS) $(CFLAGS) -MT message_client-getch.obj -MD -MP -MF $(DEPDIR)/message_client-getch.Tpo -c -o message_client-getch.obj `if test -f 'getch.c'; then $(CYGPATH_W) 'getch.c'; else $(CYGPATH_W) '$(srcdir)/getch.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/message_client-getch.Tpo $(DEPDIR)/message_client-getch.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='getch.c' object='message_client-getch.obj' libtool=no @AMDEPBACKSLASH@
+chatnut-getch.obj: getch.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-getch.obj -MD -MP -MF $(DEPDIR)/chatnut-getch.Tpo -c -o chatnut-getch.obj `if test -f 'getch.c'; then $(CYGPATH_W) 'getch.c'; else $(CYGPATH_W) '$(srcdir)/getch.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chatnut-getch.Tpo $(DEPDIR)/chatnut-getch.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='getch.c' object='chatnut-getch.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(message_client_CFLAGS) $(CFLAGS) -c -o message_client-getch.obj `if test -f 'getch.c'; then $(CYGPATH_W) 'getch.c'; else $(CYGPATH_W) '$(srcdir)/getch.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-getch.obj `if test -f 'getch.c'; then $(CYGPATH_W) 'getch.c'; else $(CYGPATH_W) '$(srcdir)/getch.c'; fi`
 
-message_client-socketlayer.o: socketlayer.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(message_client_CFLAGS) $(CFLAGS) -MT message_client-socketlayer.o -MD -MP -MF $(DEPDIR)/message_client-socketlayer.Tpo -c -o message_client-socketlayer.o `test -f 'socketlayer.c' || echo '$(srcdir)/'`socketlayer.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/message_client-socketlayer.Tpo $(DEPDIR)/message_client-socketlayer.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='socketlayer.c' object='message_client-socketlayer.o' libtool=no @AMDEPBACKSLASH@
+chatnut-socketlayer.o: socketlayer.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-socketlayer.o -MD -MP -MF $(DEPDIR)/chatnut-socketlayer.Tpo -c -o chatnut-socketlayer.o `test -f 'socketlayer.c' || echo '$(srcdir)/'`socketlayer.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chatnut-socketlayer.Tpo $(DEPDIR)/chatnut-socketlayer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='socketlayer.c' object='chatnut-socketlayer.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(message_client_CFLAGS) $(CFLAGS) -c -o message_client-socketlayer.o `test -f 'socketlayer.c' || echo '$(srcdir)/'`socketlayer.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-socketlayer.o `test -f 'socketlayer.c' || echo '$(srcdir)/'`socketlayer.c
 
-message_client-socketlayer.obj: socketlayer.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(message_client_CFLAGS) $(CFLAGS) -MT message_client-socketlayer.obj -MD -MP -MF $(DEPDIR)/message_client-socketlayer.Tpo -c -o message_client-socketlayer.obj `if test -f 'socketlayer.c'; then $(CYGPATH_W) 'socketlayer.c'; else $(CYGPATH_W) '$(srcdir)/socketlayer.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/message_client-socketlayer.Tpo $(DEPDIR)/message_client-socketlayer.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='socketlayer.c' object='message_client-socketlayer.obj' libtool=no @AMDEPBACKSLASH@
+chatnut-socketlayer.obj: socketlayer.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-socketlayer.obj -MD -MP -MF $(DEPDIR)/chatnut-socketlayer.Tpo -c -o chatnut-socketlayer.obj `if test -f 'socketlayer.c'; then $(CYGPATH_W) 'socketlayer.c'; else $(CYGPATH_W) '$(srcdir)/socketlayer.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chatnut-socketlayer.Tpo $(DEPDIR)/chatnut-socketlayer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='socketlayer.c' object='chatnut-socketlayer.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(message_client_CFLAGS) $(CFLAGS) -c -o message_client-socketlayer.obj `if test -f 'socketlayer.c'; then $(CYGPATH_W) 'socketlayer.c'; else $(CYGPATH_W) '$(srcdir)/socketlayer.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-socketlayer.obj `if test -f 'socketlayer.c'; then $(CYGPATH_W) 'socketlayer.c'; else $(CYGPATH_W) '$(srcdir)/socketlayer.c'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
