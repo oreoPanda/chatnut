@@ -30,3 +30,12 @@
 
 # Debug files
 *.dSYM/
+
+# Data folder
+data/
+
+# Netbeans project folder
+nbproject/
+
+# gedit backup files
+*~
