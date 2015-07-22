@@ -127,6 +127,8 @@ gboolean key_pressed( GtkWidget *textview, GdkEventKey *event, GtkWidget *textlo
                 text = gtk_text_buffer_get_text( sourceBuffer, &start, &end, FALSE );
             }
             else return TRUE;	//event was handled, '\n' will not be printed (would be if FALSE is returned)
+            
+            //send text to the specified buddy
 
             //let the text start in a new line in the destination buffer (by adding a '\n' at index 0)
             if( gtk_text_buffer_get_char_count(destinationBuffer) > 0 )
