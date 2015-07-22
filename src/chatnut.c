@@ -31,6 +31,7 @@
 #include "messaging.h"
 #include "socketprx.h"
 
+GIOChannel *connection_point;
 GtkWidget *window, *grid, *textoutput, *textinput, *list;
 int connected = FALSE;
 int receiver_set = FALSE;
@@ -83,7 +84,6 @@ static void contact_selection_handler( GtkTreeSelection *selection, GtkTextView 
         //get the selected contact's name and load it's chat history into the message_view
         gtk_tree_model_get( model, &iter, NAME_COLUMN, &contact_name, -1 );
         gchar *history = load_message_history( contact_name, 30 );
-        g_free(contact_name);
         messageview_buffer = gtk_text_view_get_buffer( message_view );
         if( history )
         {
@@ -94,6 +94,15 @@ static void contact_selection_handler( GtkTreeSelection *selection, GtkTextView 
             gtk_text_buffer_set_text( messageview_buffer, "<No recent chats found>", -1 );	//-1 cuz text is terminated
         }
         free(history);
+
+        //TODO: send a /unwho signal first to disconnect previous buddy
+        //send the server a /who command to specify who we're talking to
+        gchar *command = NULL;
+        command = calloc( strlen(contact_name)+strlen("/who")+1, sizeof(gchar) );
+        strncpy( command, "/who", 4 );
+        strncat( command, contact_name, strlen(contact_name) );
+        g_io_add_watch( connection_point, G_IO_OUT, send_outgoing, command );
+        g_free(contact_name);
     }
 }
 
@@ -128,7 +137,8 @@ gboolean key_pressed( GtkWidget *textview, GdkEventKey *event, GtkWidget *textlo
             }
             else return TRUE;	//event was handled, '\n' will not be printed (would be if FALSE is returned)
             
-            //send text to the specified buddy
+            //send text to server
+            TCP_send(  );
 
             //let the text start in a new line in the destination buffer (by adding a '\n' at index 0)
             if( gtk_text_buffer_get_char_count(destinationBuffer) > 0 )
@@ -255,7 +265,18 @@ static gboolean receive_incoming( GIOChannel *sourcechannel, GIOCondition condit
 	{
 		evaluate_incoming(message);
 	}
-	return FALSE;	//event handled, no need for further handling
+	return FALSE;	//event handled, no need for further handling (this is GLib, GTK (GObject) seems different)
+}
+
+//send outgoing data, this function is called when GIOChannel is ready for write
+//arguments: data is the data to be sent
+static gboolean send_outgoing( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
+{
+    socket_t sock;
+    
+    sock = g_io_channel_unix_get_fd(sourcechannel);
+    TCP_send( &sock, data, strlen(data)+1, 0 );
+    return FALSE;   //according to the GLib Reference Manual, should return FALSE if event source should be removed
 }
 
 static gboolean connection_error( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
@@ -345,7 +366,6 @@ int main(int argc, char *argv[])
 {
 	/*set up networking*/
 	socket_t sock;
-	GIOChannel *connection_point;
 
 	if( argc != 3 )
 	{
