@@ -248,8 +248,7 @@ static void evaluate_incoming( char *message )
 	}
 }
 
-//send outgoing data, this function is called when GIOChannel is ready for write
-//arguments: data is the data to be sent
+//send outgoing data, data has to be nul-terminated
 void send_outgoing( gpointer data )
 {
     int len = strlen(data);
@@ -276,6 +275,10 @@ void send_outgoing( gpointer data )
         {
             print_error( "Reached end of file while sending data.\n" );
         }
+        default:
+        {
+            print_error("Encountered unknown return value of g_io_channel_write_chars().\n");
+        }
     }
     
     //check if all characters were written
@@ -287,7 +290,7 @@ void send_outgoing( gpointer data )
         }
         default:
         {
-            print_error();
+            print_error("Not all characters were sent.\n");
         }
     }
     

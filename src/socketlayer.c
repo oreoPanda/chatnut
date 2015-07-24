@@ -132,26 +132,60 @@ void accept_socket( socket_t *sock, socket_t *new_sock )
 	}
 }
 
-int TCP_send( socket_t *sock, const char *data, int len, int flags )
+//send outgoing data, data has to be nul-terminated
+void send_outgoing( gpointer data )
 {
-	
-	int return_val;
-	return_val = send( *sock, data, len, flags );
-	if( return_val == -1 )
-	{
-		fprintf( stderr, "Error sending data!: %s\n", strerror(errno));
-		return -1;
-	}
-	else if( return_val != len )
-	{
-		fprintf( stderr, "Not all data was sent!: %s\n", strerror(errno) );
-	}
-	else if( return_val == len )
-	{
-		printf( "All data was sent!\n" );
-	}
-	return len;
-
+    int len = strlen(data);
+    int size = len+1;
+    int written_size = 0;
+    GIOStatus status;
+    GError *error; //don't understand
+    //GConvertError **error;  //don't understand
+    
+    //try sending until a value different from GIO_STATUS_AGAIN is returned
+    while( (status = g_io_channel_write_chars( channel, data, size, &written_size, &error )) == G_IO_STATUS_AGAIN );
+    //evaluate return value
+    switch(status)
+    {
+        case G_IO_STATUS_ERROR:
+        {
+            print_error( "Unable to send data: " );//I'm assuming error will be set so its message will come after here
+        }
+        case G_IO_STATUS_NORMAL:
+        {
+            break;
+        }
+        case G_IO_STATUS_EOF:
+        {
+            print_error( "Reached end of file while sending data.\n" );
+        }
+        default:
+        {
+            print_error("Encountered unknown return value of g_io_channel_write_chars().\n");
+        }
+    }
+    
+    //check if all characters were written
+    switch(written_size)
+    {
+        case size:
+        {
+            break;
+        }
+        default:
+        {
+            print_error("Not all characters were sent.\n");
+        }
+    }
+    
+    //check error variable
+    if( error != NULL )
+    {
+        print_error( error->message );
+        print_error("\n");
+        g_error_free(error);
+    }
+    return;
 }
 
 int TCP_recv( socket_t *sock, char *data, int len, int flags )
