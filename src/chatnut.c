@@ -31,7 +31,7 @@
 #include "messaging.h"
 #include "socketprx.h"
 
-GIOChannel *connection_point;
+GIOChannel *channel = NULL;
 GtkWidget *window, *grid, *textoutput, *textinput, *list;
 int connected = FALSE;
 int receiver_set = FALSE;
@@ -95,13 +95,17 @@ static void contact_selection_handler( GtkTreeSelection *selection, GtkTextView 
         }
         free(history);
 
-        //TODO: send a /unwho signal first to disconnect previous buddy
-        //send the server a /who command to specify who we're talking to
-        gchar *command = NULL;
+        //send the server a /unwho command and a /who command to specify who we're talking to
+        // /unwho
+        gchar *command = "/unwho";
+        send_outgoing(command);
+        // /who contact_name
         command = calloc( strlen(contact_name)+strlen("/who")+1, sizeof(gchar) );
         strncpy( command, "/who", 4 );
         strncat( command, contact_name, strlen(contact_name) );
         g_io_add_watch( connection_point, G_IO_OUT, send_outgoing, command );
+        
+        g_free(command);
         g_free(contact_name);
     }
 }
@@ -113,7 +117,7 @@ static void backspace_handler( GtkTextView *textView, gpointer data )
 
 gboolean key_pressed( GtkWidget *textview, GdkEventKey *event, GtkWidget *textlog )	//textview is the input one, textlog the output
 {
-    if( (event->state & GDK_SHIFT_MASK) )	//if shift is held down, exit right away (shift-enter shall be newline, like skype or pidgin do, too)
+    if( (event->state & GDK_SHIFT_MASK) )	//if shift is held down, return right away (shift-enter shall be newline, like skype or pidgin do, too)
     {
             return FALSE;
     }
@@ -244,8 +248,15 @@ static void evaluate_incoming( char *message )
 	}
 }
 
+//send outgoing data, this function is called when GIOChannel is ready for write
+//arguments: data is the data to be sent
+gboolean send_outgoing( gpointer data )
+{
+    
+}
+
 //receive incoming data, this function is called when the GIOChannel is ready for reading
-static gboolean receive_incoming( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
+static gboolean channel_data_in_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
 {
 	socket_t sock;
 	char *message = malloc( MSG_LEN*sizeof(char) );
@@ -268,24 +279,13 @@ static gboolean receive_incoming( GIOChannel *sourcechannel, GIOCondition condit
 	return FALSE;	//event handled, no need for further handling (this is GLib, GTK (GObject) seems different)
 }
 
-//send outgoing data, this function is called when GIOChannel is ready for write
-//arguments: data is the data to be sent
-static gboolean send_outgoing( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
-{
-    socket_t sock;
-    
-    sock = g_io_channel_unix_get_fd(sourcechannel);
-    TCP_send( &sock, data, strlen(data)+1, 0 );
-    return FALSE;   //according to the GLib Reference Manual, should return FALSE if event source should be removed
-}
-
-static gboolean connection_error( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
+static gboolean channel_error_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
 {
     printf( "GIOChannel reported error.\n" );
     return TRUE;       //signal not finally handled, pass it on
 }
 
-static gboolean connection_hungup( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
+static gboolean channel_hungup_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
 {
     printf( "GIOChannel was hung up.\n" );
     return TRUE;        //signal not finally handled, pass it on
@@ -380,10 +380,10 @@ int main(int argc, char *argv[])
 	//done
 
 	/*set up a GIOChannel*/
-	connection_point = g_io_channel_unix_new(sock);
-	g_io_add_watch( connection_point, G_IO_IN, receive_incoming, NULL );
-        g_io_add_watch( connection_point, G_IO_ERR, connection_error, NULL );
-        g_io_add_watch( connection_point, G_IO_HUP, connection_hungup, NULL );
+	channel = g_io_channel_unix_new(sock);
+	g_io_add_watch( channel, G_IO_IN, channel_data_in_handle, NULL );
+        g_io_add_watch( channel, G_IO_ERR, channel_error_handle, NULL );
+        g_io_add_watch( channel, G_IO_HUP, channel_hungup_handle, NULL );
 	//done
 	//done setting up networking
 
