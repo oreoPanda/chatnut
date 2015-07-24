@@ -13,10 +13,11 @@
 #include <netdb.h>		//for gethostbyname()
 	//TODO do I need sys/types.h?
 
+#include <glib.h>
+
 #define socket_t int
 #define SUCCESS 0
 #define FAILURE 1
-#define CLIENT_MAX 2
 
 void reset_timeout(struct timeval *timeout);
 void error_exit( char *error_message );
@@ -26,7 +27,16 @@ void listen_socket( socket_t *sock );
 void connect_socket( socket_t *sock, char *server_addr, unsigned short port );
 void my_select( int numfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout );
 void accept_socket( socket_t *sock, socket_t *new_sock );
-void send_outgoing( char *data );
-int TCP_recv( socket_t *sock, char *data, int len, int flags );
 void cleanup(void);
 void close_socket( socket_t *sock );
+
+static gboolean channel_data_in_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data );
+static gboolean channel_data_out_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data );
+static gboolean channel_error_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data );
+static gboolean channel_hungup_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data );
+void receive_incoming( GIOChannel *channel );
+void send_outgoing( GIOChannel *channel, char *data );
+
+static void evaluate_incoming( char *message );
+
+void print_error( char *message );

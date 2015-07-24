@@ -132,18 +132,58 @@ void accept_socket( socket_t *sock, socket_t *new_sock )
 	}
 }
 
+//receive incoming data, this function is called when the GIOChannel is ready for reading
+static gboolean channel_data_in_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
+{
+    receive_incoming( sourcechannel, data );
+            
+    return TRUE;                //signal handled
+}
+
+static gboolean channel_data_out_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
+{
+    send_outgoing( sourcechannel, data );
+    g_io_channel_unref(sourcechannel);  //decrement reference count, which should disconnect this callback
+    
+    return FALSE;               //signal handled
+}
+
+static gboolean channel_error_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
+{
+    printf( "GIOChannel reported error.\n" );
+    
+    return TRUE;       //signal not finally handled, pass it on
+}
+
+static gboolean channel_hungup_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
+{
+    printf( "GIOChannel was hung up.\n" );
+    
+    return TRUE;        //signal not finally handled, pass it on
+}
+
+//receive incoming data
+void receive_incoming( GIOChannel *channel )
+{
+    /*contents shall be similar to send_outgoing*/
+    
+    evaluate_incoming(message);
+    
+    return;
+}
+
 //send outgoing data, data has to be nul-terminated
-void send_outgoing( char *data )
+void send_outgoing( GIOChannel *channel, char *data )
 {
     int len = strlen(data);
     int size = len+1;
-    int written_size = 0;
+    gsize written_size = 0;
     GIOStatus status;
-    GError *error; //don't understand
-    //GConvertError **error;  //don't understand
+    GError *error = NULL;
     
     //try sending until a value different from GIO_STATUS_AGAIN is returned
     while( (status = g_io_channel_write_chars( channel, data, size, &written_size, &error )) == G_IO_STATUS_AGAIN );
+    
     //evaluate return value
     switch(status)
     {
@@ -163,19 +203,14 @@ void send_outgoing( char *data )
         {
             print_error("Encountered unknown return value of g_io_channel_write_chars().\n");
         }
+        
+        return;
     }
     
     //check if all characters were written
-    switch(written_size)
+    if(written_size != size)
     {
-        case size:
-        {
-            break;
-        }
-        default:
-        {
-            print_error("Not all characters were sent.\n");
-        }
+        print_error("Not all characters were sent.\n");
     }
     
     //check error variable
@@ -217,4 +252,10 @@ void close_socket( socket_t *sock )
 	{
 		fprintf( stderr, "Error closing socket!: %s\n", strerror(errno) );
 	}
+}
+
+void print_error( char *message )
+{
+    fprintf( stderr, "ERROR: %s", message );
+    return;
 }

@@ -32,7 +32,7 @@
 #include "connection.h"
 
 GIOChannel *channel = NULL;
-GtkWidget *window, *grid, *textoutput, *textinput, *list;
+GtkWidget *window, *grid, *textinputview, *textoutputview, *list;
 int connected = FALSE;
 int receiver_set = FALSE;
 int name_set = FALSE;
@@ -44,7 +44,7 @@ enum
     N_COLUMNS
 };
 
-gchar *load_message_history( gchar *contact, int max_messages )
+char *load_message_history( char *contact, int max_messages )
 {
     FILE *message_log;
     char *messages;
@@ -76,14 +76,16 @@ static void contact_selection_handler( GtkTreeSelection *selection, GtkTextView 
 {
     GtkTreeIter iter;
     GtkTreeModel *model;
-    gchar *contact_name;
+    char *contact_name;
     GtkTextBuffer *messageview_buffer;
 
     if( gtk_tree_selection_get_selected( selection, &model, &iter ) )
     {
+        char *history;
+        
         //get the selected contact's name and load it's chat history into the message_view
         gtk_tree_model_get( model, &iter, NAME_COLUMN, &contact_name, -1 );
-        gchar *history = load_message_history( contact_name, 30 );
+        history = load_message_history( contact_name, 30 );
         messageview_buffer = gtk_text_view_get_buffer( message_view );
         if( history )
         {
@@ -95,15 +97,15 @@ static void contact_selection_handler( GtkTreeSelection *selection, GtkTextView 
         }
         free(history);
 
-        //send the server a /unwho command and a /who command to specify who we're talking to
+        /*send the server a /unwho command and a /who command to specify who we're talking to*/
         // /unwho
-        gchar *command = "/unwho";
-        send_outgoing(command);
+        char *command = "/unwho";
+        g_io_add_watch( channel, G_IO_OUT, channel_data_out_handle, command );
         // /who contact_name
-        command = calloc( strlen(contact_name)+strlen("/who")+1, sizeof(gchar) );
+        command = calloc( strlen("/who")+strlen(contact_name)+1, sizeof(char) );
         strncpy( command, "/who", 4 );
         strncat( command, contact_name, strlen(contact_name) );
-        g_io_add_watch( connection_point, G_IO_OUT, send_outgoing, command );
+        g_io_add_watch( channel, G_IO_OUT, channel_data_out_handle, command );
         
         g_free(command);
         g_free(contact_name);
@@ -115,21 +117,21 @@ static void backspace_handler( GtkTextView *textView, gpointer data )
     printf( "Backspace received!\n" );
 }
 
-gboolean key_pressed( GtkWidget *textview, GdkEventKey *event, GtkWidget *textlog )	//textview is the input one, textlog the output
+gboolean key_pressed( GtkWidget *textinput, GdkEventKey *event, GtkWidget *textlog )	//textinput is the message input one, textlog the message history
 {
     if( (event->state & GDK_SHIFT_MASK) )	//if shift is held down, return right away (shift-enter shall be newline, like skype or pidgin do, too)
     {
             return FALSE;
     }
 
-    GtkTextBuffer *sourceBuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textview));	//get buffer of input textview
+    GtkTextBuffer *sourceBuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textinput));	//get buffer of input textview
     GtkTextBuffer *destinationBuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textlog));	//get buffer of output textview
 
     switch( event->keyval )
     {
         case GDK_KEY_Return:
         {
-            gchar *text = NULL;
+            char *text = NULL;
             GtkTextIter start;
             GtkTextIter end;
 
@@ -142,7 +144,7 @@ gboolean key_pressed( GtkWidget *textview, GdkEventKey *event, GtkWidget *textlo
             else return TRUE;	//event was handled, '\n' will not be printed (would be if FALSE is returned)
             
             //send text to server
-            TCP_send(  );
+            g_io_add_watch( channel, G_IO_OUT, channel_data_out_handle, text );
 
             //let the text start in a new line in the destination buffer (by adding a '\n' at index 0)
             if( gtk_text_buffer_get_char_count(destinationBuffer) > 0 )
@@ -151,7 +153,7 @@ gboolean key_pressed( GtkWidget *textview, GdkEventKey *event, GtkWidget *textlo
                 char temp[text_len+1];
                 strncpy(temp, text, text_len);
                 temp[text_len] = '\0';
-                text = realloc( text, sizeof(gchar) * (text_len+2) );	//+2: \n...\0
+                text = realloc( text, sizeof(char) * (text_len+2) );	//+2: \n...\0
                 strncpy( text+1, temp, text_len+1 );
                 text[0] = '\n';
                 text[text_len+1] = '\0';
@@ -199,7 +201,7 @@ GtkWidget *set_grid()
     return grid;
 }
 
-GtkWidget *set_messaging_view()
+GtkWidget *set_message_history_area()
 {
 	GtkWidget *textviewer;
 	textviewer = gtk_text_view_new();
@@ -210,90 +212,75 @@ GtkWidget *set_messaging_view()
 	return textviewer;
 }
 
-GtkWidget *set_typing_area()
+GtkWidget *set_message_input_area()
 {
 	GtkWidget *text_input_field;
 	text_input_field = gtk_text_view_new();
 	//signals
 	g_signal_connect( text_input_field, "backspace", G_CALLBACK(backspace_handler), NULL );
-	g_signal_connect( text_input_field, "key-press-event", G_CALLBACK(key_pressed), textoutput );
+	g_signal_connect( text_input_field, "key-press-event", G_CALLBACK(key_pressed), textoutputview );
 
 	return text_input_field;
 }
 
 static void evaluate_incoming( char *message )
 {
-	int indicator = message[0];		//indicates whether it is a message or a command reply
+    //check whether it is a command reply, a message, or the "connected" signal
+    //add to the buffer of textoutputview if it is a message
+    socket_t sock;
+    char *message = malloc( MSG_LEN*sizeof(char) );
 
-	switch(indicator)
-	{
-		case NAME_IS_SET:
-		{
-			name_set = TRUE;
-			break;
-		}
-		case BUDDY_IS_SET:
-		{
-			receiver_set = TRUE;
-			break;
-		}
-		default:
-		{
-			GtkTextBuffer *message_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textoutput));
-			GtkTextIter start, end;
-			gtk_text_buffer_get_bounds( message_buffer, &start, &end );
-			gtk_text_buffer_insert( message_buffer, &end, message, -1 );
-			break;
-		}
-	}
-}
+    g_print( "Received incoming.\n" );
 
-//receive incoming data, this function is called when the GIOChannel is ready for reading
-static gboolean channel_data_in_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
-{
-	socket_t sock;
-	char *message = malloc( MSG_LEN*sizeof(char) );
+    sock = g_io_channel_unix_get_fd(sourcechannel);
+    TCP_recv( &sock, message, MSG_LEN, 0 );
 
-	g_print( "Received incoming.\n" );
+    if( strncmp( message, conn_msg, CONN_MSG_LEN-1 ) == 0 )
+    {
+            printf( "Server accepted connection.\n" );
+            evaluate_incoming(message);
+            connected = TRUE;
+    }
+    else
+    {
+            evaluate_incoming(message);
+    }
+    
+    int indicator = message[0];		//indicates whether it is a message or a command reply
 
-	sock = g_io_channel_unix_get_fd(sourcechannel);
-	TCP_recv( &sock, message, MSG_LEN, 0 );
-
-	if( strncmp( message, conn_msg, CONN_MSG_LEN-1 ) == 0 )
-	{
-		printf( "Server accepted connection.\n" );
-		evaluate_incoming(message);
-		connected = TRUE;
-	}
-	else
-	{
-		evaluate_incoming(message);
-	}
-	return FALSE;	//event handled, no need for further handling (this is GLib, GTK (GObject) seems different)
-}
-
-static gboolean channel_error_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
-{
-    printf( "GIOChannel reported error.\n" );
-    return TRUE;       //signal not finally handled, pass it on
-}
-
-static gboolean channel_hungup_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
-{
-    printf( "GIOChannel was hung up.\n" );
-    return TRUE;        //signal not finally handled, pass it on
+    switch(indicator)
+    {
+        case NAME_IS_SET:
+        {
+                name_set = TRUE;
+                break;
+        }
+        case BUDDY_IS_SET:
+        {
+                receiver_set = TRUE;
+                break;
+        }
+        default:
+        {
+                GtkTextBuffer *message_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textoutputview));
+                GtkTextIter start, end;
+                gtk_text_buffer_get_bounds( message_buffer, &start, &end );
+                gtk_text_buffer_insert( message_buffer, &end, message, -1 );
+                break;
+        }
+    }
 }
 
 void construct_main_window()
 {
 	gtk_container_add( GTK_CONTAINER(window), grid );
 
-	gtk_grid_attach( GTK_GRID(grid), textoutput, 0, 1, 2, 1 );
-	gtk_grid_attach( GTK_GRID(grid), textinput, 0, 2, 2, 1 );
+	gtk_grid_attach( GTK_GRID(grid), textoutputview, 0, 1, 2, 1 );
+	gtk_grid_attach( GTK_GRID(grid), textinputview, 0, 2, 2, 1 );
 	gtk_grid_attach( GTK_GRID(grid), list, 2, 0, 1, 3 );
 
-	gtk_widget_show(textoutput);
-	gtk_widget_show(textinput);
+	gtk_widget_show(textoutputview);
+	gtk_widget_show(textinputview);
 	gtk_widget_show(list);
 
 	/*show*/
@@ -385,8 +372,8 @@ int main(int argc, char *argv[])
 	/*set up the window and its components (two text areas and a contact list)*/
 	window = set_window();
 	grid = set_grid();
-	textoutput = set_messaging_view();	//text viewer
-	textinput = set_typing_area();
+	textoutputview = set_message_history_area();	//text viewer
+	textinputview = set_message_input_area();
 
 
 	//done setting up
@@ -417,7 +404,7 @@ int main(int argc, char *argv[])
 	GtkTreeSelection *selection;
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(list));	//not the actual selection, just an object that will be associated with the "changed" event/signal
 	gtk_tree_selection_set_mode( selection, GTK_SELECTION_SINGLE );
-	g_signal_connect( G_OBJECT(selection), "changed", G_CALLBACK(contact_selection_handler), textoutput );
+	g_signal_connect( G_OBJECT(selection), "changed", G_CALLBACK(contact_selection_handler), textoutputview );
 
 
 	construct_main_window();
@@ -427,10 +414,4 @@ int main(int argc, char *argv[])
 	cleanup();
 
 	return EXIT_SUCCESS;
-}
-
-void print_error( char *message )
-{
-    fprintf( stderr, "ERROR: %s", message );
-    return;
 }
