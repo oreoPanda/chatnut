@@ -133,7 +133,7 @@ void accept_socket( socket_t *sock, socket_t *new_sock )
 }
 
 //send outgoing data, data has to be nul-terminated
-void send_outgoing( char data )
+void send_outgoing( char *data )
 {
     int len = strlen(data);
     int size = len+1;
