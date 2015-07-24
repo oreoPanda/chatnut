@@ -29,7 +29,7 @@
 
 #include "getch.h"
 #include "messaging.h"
-#include "socketprx.h"
+#include "connection.h"
 
 GIOChannel *channel = NULL;
 GtkWidget *window, *grid, *textoutput, *textinput, *list;
@@ -246,62 +246,6 @@ static void evaluate_incoming( char *message )
 			break;
 		}
 	}
-}
-
-//send outgoing data, data has to be nul-terminated
-void send_outgoing( gpointer data )
-{
-    int len = strlen(data);
-    int size = len+1;
-    int written_size = 0;
-    GIOStatus status;
-    GError *error; //don't understand
-    //GConvertError **error;  //don't understand
-    
-    //try sending until a value different from GIO_STATUS_AGAIN is returned
-    while( (status = g_io_channel_write_chars( channel, data, size, &written_size, &error )) == G_IO_STATUS_AGAIN );
-    //evaluate return value
-    switch(status)
-    {
-        case G_IO_STATUS_ERROR:
-        {
-            print_error( "Unable to send data: " );//I'm assuming error will be set so its message will come after here
-        }
-        case G_IO_STATUS_NORMAL:
-        {
-            break;
-        }
-        case G_IO_STATUS_EOF:
-        {
-            print_error( "Reached end of file while sending data.\n" );
-        }
-        default:
-        {
-            print_error("Encountered unknown return value of g_io_channel_write_chars().\n");
-        }
-    }
-    
-    //check if all characters were written
-    switch(written_size)
-    {
-        case size:
-        {
-            break;
-        }
-        default:
-        {
-            print_error("Not all characters were sent.\n");
-        }
-    }
-    
-    //check error variable
-    if( error != NULL )
-    {
-        print_error( error->message );
-        print_error("\n");
-        g_error_free(error);
-    }
-    return;
 }
 
 //receive incoming data, this function is called when the GIOChannel is ready for reading

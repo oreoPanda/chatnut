@@ -1,6 +1,6 @@
 /*socketlayer.c - for UNIX*/
 
-#include "socketprx.h"
+#include "connection.h"
 
 void reset_timeout(struct timeval *timeout)
 {
@@ -133,7 +133,7 @@ void accept_socket( socket_t *sock, socket_t *new_sock )
 }
 
 //send outgoing data, data has to be nul-terminated
-void send_outgoing( gpointer data )
+void send_outgoing( char data )
 {
     int len = strlen(data);
     int size = len+1;

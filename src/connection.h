@@ -26,7 +26,7 @@ void listen_socket( socket_t *sock );
 void connect_socket( socket_t *sock, char *server_addr, unsigned short port );
 void my_select( int numfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout );
 void accept_socket( socket_t *sock, socket_t *new_sock );
-int TCP_send( socket_t *sock, const char *data, int len, int flags );
+void send_outgoing( char data );
 int TCP_recv( socket_t *sock, char *data, int len, int flags );
 void cleanup(void);
 void close_socket( socket_t *sock );
