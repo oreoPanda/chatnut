@@ -250,9 +250,55 @@ static void evaluate_incoming( char *message )
 
 //send outgoing data, this function is called when GIOChannel is ready for write
 //arguments: data is the data to be sent
-gboolean send_outgoing( gpointer data )
+void send_outgoing( gpointer data )
 {
+    int len = strlen(data);
+    int size = len+1;
+    int written_size = 0;
+    GIOStatus status;
+    GError *error; //don't understand
+    //GConvertError **error;  //don't understand
     
+    //try sending until a value different from GIO_STATUS_AGAIN is returned
+    while( (status = g_io_channel_write_chars( channel, data, size, &written_size, &error )) == G_IO_STATUS_AGAIN );
+    //evaluate return value
+    switch(status)
+    {
+        case G_IO_STATUS_ERROR:
+        {
+            print_error( "Unable to send data: " );//I'm assuming error will be set so its message will come after here
+        }
+        case G_IO_STATUS_NORMAL:
+        {
+            break;
+        }
+        case G_IO_STATUS_EOF:
+        {
+            print_error( "Reached end of file while sending data.\n" );
+        }
+    }
+    
+    //check if all characters were written
+    switch(written_size)
+    {
+        case size:
+        {
+            break;
+        }
+        default:
+        {
+            print_error();
+        }
+    }
+    
+    //check error variable
+    if( error != NULL )
+    {
+        print_error( error->message );
+        print_error("\n");
+        g_error_free(error);
+    }
+    return;
 }
 
 //receive incoming data, this function is called when the GIOChannel is ready for reading
@@ -434,4 +480,10 @@ int main(int argc, char *argv[])
 	cleanup();
 
 	return EXIT_SUCCESS;
+}
+
+void print_error( char *message )
+{
+    fprintf( stderr, "ERROR: %s", message );
+    return;
 }
