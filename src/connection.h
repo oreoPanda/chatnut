@@ -19,7 +19,7 @@
 #define SUCCESS 0
 #define FAILURE 1
 
-void reset_timeout(struct timeval *timeout);
+//void reset_timeout(struct timeval *timeout);
 void error_exit( char *error_message );
 int create_socket( int af, int type, int protocol );
 void bind_socket( socket_t *sock, unsigned long address, unsigned short port );

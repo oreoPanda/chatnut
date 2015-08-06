@@ -2,11 +2,11 @@
 
 #include "connection.h"
 
-void reset_timeout(struct timeval *timeout)
+/*void reset_timeout(struct timeval *timeout)
 {
 	timeout->tv_sec = 0;
 	timeout->tv_usec = 10,000; //microseconds: 1,000,000 of them each second, here process will sleep for one 100th of a second
-}
+}*/
 
 /*exit with custom error message*/
 void error_exit(char *error_message)
@@ -163,7 +163,7 @@ static gboolean channel_hungup_handle( GIOChannel *sourcechannel, GIOCondition c
 }
 
 //receive incoming data
-void receive_incoming( GIOChannel *channel )
+void receive_incoming( GIOChannel *sourcechannel, char *message )
 {
     /*contents shall be similar to send_outgoing*/
     
