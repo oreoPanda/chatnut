@@ -72,7 +72,7 @@ char *load_message_history( char *contact, int max_messages )
     return messages;
 }
 
-static void contact_selection_handler( GtkTreeSelection *selection, GtkTextView *message_view )
+void contact_selection_handler( GtkTreeSelection *selection, GtkTextView *message_view )
 {
     GtkTreeIter iter;
     GtkTreeModel *model;
@@ -105,7 +105,7 @@ static void contact_selection_handler( GtkTreeSelection *selection, GtkTextView 
         command = calloc( strlen("/who")+strlen(contact_name)+1, sizeof(char) );
         strncpy( command, "/who", 4 );
         strncat( command, contact_name, strlen(contact_name) );
-        g_io_add_watch( channel, G_IO_OUT, channel_data_out_handle, command );
+        send_outgoing( channel, command );
         
         g_free(command);
         g_free(contact_name);
@@ -144,7 +144,7 @@ gboolean key_pressed( GtkWidget *textinput, GdkEventKey *event, GtkWidget *textl
             else return TRUE;	//event was handled, '\n' will not be printed (would be if FALSE is returned)
             
             //send text to server
-            g_io_add_watch( channel, G_IO_OUT, channel_data_out_handle, text );
+            send_outgoing( channel, text );
 
             //let the text start in a new line in the destination buffer (by adding a '\n' at index 0)
             if( gtk_text_buffer_get_char_count(destinationBuffer) > 0 )
@@ -223,50 +223,42 @@ GtkWidget *set_message_input_area()
 	return text_input_field;
 }
 
-static void evaluate_incoming( char *message )
+void evaluate_incoming( char *message )
 {
     //check whether it is a command reply, a message, or the "connected" signal
     //add to the buffer of textoutputview if it is a message
-    socket_t sock;
-    char *message = malloc( MSG_LEN*sizeof(char) );
 
-    g_print( "Received incoming.\n" );
-
-    sock = g_io_channel_unix_get_fd(sourcechannel);
-    TCP_recv( &sock, message, MSG_LEN, 0 );
+    g_print( "Evaluating incoming message.\n" );
 
     if( strncmp( message, conn_msg, CONN_MSG_LEN-1 ) == 0 )
     {
             printf( "Server accepted connection.\n" );
-            evaluate_incoming(message);
             connected = TRUE;
     }
     else
     {
-            evaluate_incoming(message);
-    }
-    
-    int indicator = message[0];		//indicates whether it is a message or a command reply
+        int indicator = message[0];		//indicates whether it is a message or a command reply
 
-    switch(indicator)
-    {
-        case NAME_IS_SET:
+        switch(indicator)
         {
-                name_set = TRUE;
-                break;
-        }
-        case BUDDY_IS_SET:
-        {
-                receiver_set = TRUE;
-                break;
-        }
-        default:
-        {
-                GtkTextBuffer *message_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textoutputview));
-                GtkTextIter start, end;
-                gtk_text_buffer_get_bounds( message_buffer, &start, &end );
-                gtk_text_buffer_insert( message_buffer, &end, message, -1 );
-                break;
+            case NAME_IS_SET:
+            {
+                    name_set = TRUE;
+                    break;
+            }
+            case BUDDY_IS_SET:
+            {
+                    receiver_set = TRUE;
+                    break;
+            }
+            default:
+            {
+                    GtkTextBuffer *message_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textoutputview));
+                    GtkTextIter start, end;
+                    gtk_text_buffer_get_bounds( message_buffer, &start, &end );
+                    gtk_text_buffer_insert( message_buffer, &end, message, -1 );
+                    break;
+            }
         }
     }
 }

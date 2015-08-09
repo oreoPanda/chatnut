@@ -30,13 +30,12 @@ void accept_socket( socket_t *sock, socket_t *new_sock );
 void cleanup(void);
 void close_socket( socket_t *sock );
 
-static gboolean channel_data_in_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data );
-static gboolean channel_data_out_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data );
-static gboolean channel_error_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data );
-static gboolean channel_hungup_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data );
-void receive_incoming( GIOChannel *channel );
+gboolean channel_data_in_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data );
+gboolean channel_data_out_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data );
+gboolean channel_error_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data );
+gboolean channel_hungup_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data );
+void receive_incoming( GIOChannel *channel, char *data );
 void send_outgoing( GIOChannel *channel, char *data );
-
-static void evaluate_incoming( char *message );
+void evaluate_incoming( char *message );
 
 void print_error( char *message );

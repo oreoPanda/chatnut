@@ -48,7 +48,7 @@ void bind_socket(socket_t *sock, unsigned long address, unsigned short port)
 		error_exit("Error binding socket to port!" );
 	}
 }
-
+#define CLIENT_MAX 5
 void listen_socket(socket_t *sock)
 {
 	if( listen(*sock, CLIENT_MAX) == -1)		//will set up queue with length CLIENT_MAX, kernel has a longer queue so more than CLIENT_MAX unconnected clients might be connect()ed successfully
@@ -136,14 +136,14 @@ void accept_socket( socket_t *sock, socket_t *new_sock )
  *these should be considered as GIOFuncs
  *GLib Reference Manual says: "the function should return FALSE if the event source should be removed"*/
 //important for all of them: data is the data passed via g_io_add_watch(), not the data waiting in socket)
-static gboolean channel_data_in_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
+gboolean channel_data_in_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
 {
     receive_incoming( sourcechannel, data );
             
     return FALSE;
 }
 
-static gboolean channel_data_out_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
+gboolean channel_data_out_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
 {
     send_outgoing( sourcechannel, data );
     g_io_channel_unref(sourcechannel);  //decrement reference count, which should disconnect this callback
@@ -151,14 +151,14 @@ static gboolean channel_data_out_handle( GIOChannel *sourcechannel, GIOCondition
     return FALSE;               //signal handled, remove event source
 }
 
-static gboolean channel_error_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
+gboolean channel_error_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
 {
     printf( "GIOChannel reported error.\n" );
     
     return TRUE;       //signal not finally handled, pass it on
 }
 
-static gboolean channel_hungup_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
+gboolean channel_hungup_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
 {
     printf( "GIOChannel was hung up.\n" );
     
@@ -174,13 +174,13 @@ void receive_incoming( GIOChannel *channel, char *data )
 {
     /*contents shall be similar to send_outgoing*/
     char *str = NULL;
-    gsize *length = NULL;
-    gsize *terminator_pos = NULL;
+    gsize length = NULL;
+    gsize terminator_pos = NULL;
     GIOStatus status;
     GError *error = NULL;
     
     //try reading until function returns something other than GIO_STATUS_AGAIN
-    while( (status = g_io_channel_read_line( channel,  )) == G_IO_STATUS_AGAIN );
+    while( (status = g_io_channel_read_line( channel, &str, &length, &terminator_pos, &error )) == G_IO_STATUS_AGAIN );
     
     //evaluate returned status
     switch(status)
@@ -225,7 +225,7 @@ void send_outgoing( GIOChannel *channel, char *data )
     GIOStatus status;
     GError *error = NULL;
     
-    //try sending until a value different from GIO_STATUS_AGAIN is returned
+    //try sending until a value different from G_IO_STATUS_AGAIN is returned
     while( (status = g_io_channel_write_chars( channel, data, size, &written_size, &error )) == G_IO_STATUS_AGAIN );
     
     //evaluate return value
