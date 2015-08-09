@@ -132,12 +132,15 @@ void accept_socket( socket_t *sock, socket_t *new_sock )
 	}
 }
 
-//receive incoming data, this function is called when the GIOChannel is ready for reading
+/*receive incoming data, this function is called when the GIOChannel is ready for reading
+ *these should be considered as GIOFuncs
+ *GLib Reference Manual says: "the function should return FALSE if the event source should be removed"*/
+//important for all of them: data is the data passed via g_io_add_watch(), not the data waiting in socket)
 static gboolean channel_data_in_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
 {
     receive_incoming( sourcechannel, data );
             
-    return TRUE;                //signal handled
+    return FALSE;
 }
 
 static gboolean channel_data_out_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
@@ -145,7 +148,7 @@ static gboolean channel_data_out_handle( GIOChannel *sourcechannel, GIOCondition
     send_outgoing( sourcechannel, data );
     g_io_channel_unref(sourcechannel);  //decrement reference count, which should disconnect this callback
     
-    return FALSE;               //signal handled
+    return FALSE;               //signal handled, remove event source
 }
 
 static gboolean channel_error_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
@@ -162,12 +165,53 @@ static gboolean channel_hungup_handle( GIOChannel *sourcechannel, GIOCondition c
     return TRUE;        //signal not finally handled, pass it on
 }
 
+//NOTE: the send and receive funtions in here only check if the messages were sent and received correctly.
+//          Whether the messages are empty or not is up to funtions such as evaluate_incoming())
+
 //receive incoming data
-void receive_incoming( GIOChannel *sourcechannel, char *message )
+//TODO: FINISH
+void receive_incoming( GIOChannel *channel, char *data )
 {
     /*contents shall be similar to send_outgoing*/
+    char *str = NULL;
+    gsize *length = NULL;
+    gsize *terminator_pos = NULL;
+    GIOStatus status;
+    GError *error = NULL;
     
-    evaluate_incoming(message);
+    //try reading until function returns something other than GIO_STATUS_AGAIN
+    while( (status = g_io_channel_read_line( channel,  )) == G_IO_STATUS_AGAIN );
+    
+    //evaluate returned status
+    switch(status)
+    {
+        case G_IO_STATUS_ERROR:
+        {
+            print_error( "Unable to read data: " ); //error message from the GError will probably come after here
+        }
+        case G_IO_STATUS_NORMAL:
+        {
+            break;
+        }
+        case G_IO_STATUS_EOF:
+        {
+            print_error( "Reached end of file while sending data.\n" );
+        }
+        default:
+        {
+            print_error("Encountered unknown return value of g_io_channel_write_chars().\n");
+        }
+    }
+    
+    //check error variable
+    if( error != NULL )
+    {
+        print_error( error->message );
+        print_error("\n");
+        g_error_free(error);
+    }
+    
+    evaluate_incoming(str);
     
     return;
 }
@@ -203,8 +247,6 @@ void send_outgoing( GIOChannel *channel, char *data )
         {
             print_error("Encountered unknown return value of g_io_channel_write_chars().\n");
         }
-        
-        return;
     }
     
     //check if all characters were written
