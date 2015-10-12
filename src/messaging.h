@@ -17,10 +17,17 @@ const char conn_msg[CONN_MSG_LEN] = "Connected";
 #define CMD_LEN 120
 #define NAMELEN 21			//last byte is null-pointer, so effective namelength is 20 bytes/letters
 
-#define HELP_WANTED 1		// /help
-#define LIST 2				// /list
-#define NAME_IS_SET 3		// /name
-#define BUDDY_IS_SET 4		// /who
-#define BUDDY_NOT_EXIST	5	// /who if buddy doesn't exist
-#define NOARG 6			// valid command but no arguments (only used with commands that need arguments, not with /help or /list
-#define ERROR 7				// invalid command
+enum commands
+{
+    HELP_WANTED = 1,		// /help
+    LIST,			// /list
+    NAME_IS_SET,		// /name
+    BUDDY_IS_SET,		// /who
+    BUDDY_NOT_EXIST,            // /who if buddy doesn't exist
+    LOGIN_SUCCESS,
+    LOGIN_FAILURE,
+    REGISTRATION_SUCCESS,
+    REGISTRATION_FAILURE,
+    NOARG,			// valid command but no arguments (only used with commands that need arguments, not with /help or /list
+    ERROR				// invalid command
+};
