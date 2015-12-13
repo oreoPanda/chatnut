@@ -2,7 +2,6 @@
 
 #include "connection.h"
 #include "connection_raw.h"
-#include "jstring.h"
 
 GIOChannel *channel = NULL;
 gboolean connected = FALSE;		//only used by watch_connection and channel_in_handle
