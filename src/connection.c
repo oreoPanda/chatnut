@@ -318,7 +318,7 @@ extern gboolean watch_connection(gpointer eval_func)
 		int sock = create_socket();
 		if( sock > 0 )
 		{
-			connected = connect_socket( &sock, "localhost", 1234 );
+			connected = connect_socket( &sock, "84.46.23.14", 1234 );
 			if(connected)
 			{
 				create_channel(sock);

@@ -87,7 +87,7 @@ extern void create_history_view(void)
     return;
 }
 
-extern void show_message_history( const char *contact_name, const char *history )
+extern void show_message_history( const char *history )
 {
 	GtkTextBuffer *history_buffer = gtk_text_view_get_buffer( GTK_TEXT_VIEW(history_view) );
 	if( history )

@@ -13,7 +13,7 @@ extern void create_history_view(void);
 extern void create_input_scrollbox(void);
 extern void create_input_view(void);
 extern void enable_input_view( gboolean (*key_pressed_cb)( GtkWidget *, GdkEvent *, gpointer ) );
-extern void show_message_history( const char *contact_name, const char *history );
+extern void show_message_history( const char *history );
 extern void append_to_history_view( const char *buffer, const char *sender );
 extern void create_right_grid(void);
 extern void create_list_view(GtkListStore *model);

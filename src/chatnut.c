@@ -297,7 +297,7 @@ static void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
 		//get the selected contact's name and load it's chat history into the message_view
 		gtk_tree_model_get( model, &iter, 0, &contact_name, -1 );
 		load_history( contact_name, &history );
-		show_message_history( contact_name, history );
+		show_message_history( history );
 		free(history);
 
 		/*if connected, send the server a /unwho command and a /who command to specify who we're talking to*/

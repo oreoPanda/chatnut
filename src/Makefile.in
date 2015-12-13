@@ -99,9 +99,9 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_chatnut_OBJECTS = chatnut-chatnut.$(OBJEXT) chatnut-getch.$(OBJEXT) \
-	chatnut-connection.$(OBJEXT) chatnut-gui.$(OBJEXT) \
-	chatnut-connection_raw.$(OBJEXT)
+am_chatnut_OBJECTS = chatnut-chatnut.$(OBJEXT) \
+	chatnut-connection_raw.$(OBJEXT) chatnut-connection.$(OBJEXT) \
+	chatnut-gui.$(OBJEXT)
 chatnut_OBJECTS = $(am_chatnut_OBJECTS)
 chatnut_LDADD = $(LDADD)
 chatnut_LINK = $(CCLD) $(chatnut_CFLAGS) $(CFLAGS) $(chatnut_LDFLAGS) \
@@ -251,7 +251,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 chatnut_CFLAGS = -std=c99 -Wall -Wextra `pkg-config --cflags gtk+-3.0`
-chatnut_SOURCES = chatnut.c getch.c connection.c gui.c connection_raw.c
+chatnut_SOURCES = chatnut.c connection_raw.c connection.c gui.c
 chatnut_LDFLAGS = `pkg-config --libs gtk+-3.0`
 all: all-am
 
@@ -342,7 +342,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chatnut-chatnut.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chatnut-connection.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chatnut-connection_raw.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chatnut-getch.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chatnut-gui.Po@am__quote@
 
 .c.o:
@@ -373,19 +372,19 @@ chatnut-chatnut.obj: chatnut.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-chatnut.obj `if test -f 'chatnut.c'; then $(CYGPATH_W) 'chatnut.c'; else $(CYGPATH_W) '$(srcdir)/chatnut.c'; fi`
 
-chatnut-getch.o: getch.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-getch.o -MD -MP -MF $(DEPDIR)/chatnut-getch.Tpo -c -o chatnut-getch.o `test -f 'getch.c' || echo '$(srcdir)/'`getch.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chatnut-getch.Tpo $(DEPDIR)/chatnut-getch.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='getch.c' object='chatnut-getch.o' libtool=no @AMDEPBACKSLASH@
+chatnut-connection_raw.o: connection_raw.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-connection_raw.o -MD -MP -MF $(DEPDIR)/chatnut-connection_raw.Tpo -c -o chatnut-connection_raw.o `test -f 'connection_raw.c' || echo '$(srcdir)/'`connection_raw.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chatnut-connection_raw.Tpo $(DEPDIR)/chatnut-connection_raw.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='connection_raw.c' object='chatnut-connection_raw.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-getch.o `test -f 'getch.c' || echo '$(srcdir)/'`getch.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-connection_raw.o `test -f 'connection_raw.c' || echo '$(srcdir)/'`connection_raw.c
 
-chatnut-getch.obj: getch.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-getch.obj -MD -MP -MF $(DEPDIR)/chatnut-getch.Tpo -c -o chatnut-getch.obj `if test -f 'getch.c'; then $(CYGPATH_W) 'getch.c'; else $(CYGPATH_W) '$(srcdir)/getch.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chatnut-getch.Tpo $(DEPDIR)/chatnut-getch.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='getch.c' object='chatnut-getch.obj' libtool=no @AMDEPBACKSLASH@
+chatnut-connection_raw.obj: connection_raw.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-connection_raw.obj -MD -MP -MF $(DEPDIR)/chatnut-connection_raw.Tpo -c -o chatnut-connection_raw.obj `if test -f 'connection_raw.c'; then $(CYGPATH_W) 'connection_raw.c'; else $(CYGPATH_W) '$(srcdir)/connection_raw.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chatnut-connection_raw.Tpo $(DEPDIR)/chatnut-connection_raw.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='connection_raw.c' object='chatnut-connection_raw.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-getch.obj `if test -f 'getch.c'; then $(CYGPATH_W) 'getch.c'; else $(CYGPATH_W) '$(srcdir)/getch.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-connection_raw.obj `if test -f 'connection_raw.c'; then $(CYGPATH_W) 'connection_raw.c'; else $(CYGPATH_W) '$(srcdir)/connection_raw.c'; fi`
 
 chatnut-connection.o: connection.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-connection.o -MD -MP -MF $(DEPDIR)/chatnut-connection.Tpo -c -o chatnut-connection.o `test -f 'connection.c' || echo '$(srcdir)/'`connection.c
@@ -414,20 +413,6 @@ chatnut-gui.obj: gui.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gui.c' object='chatnut-gui.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-gui.obj `if test -f 'gui.c'; then $(CYGPATH_W) 'gui.c'; else $(CYGPATH_W) '$(srcdir)/gui.c'; fi`
-
-chatnut-connection_raw.o: connection_raw.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-connection_raw.o -MD -MP -MF $(DEPDIR)/chatnut-connection_raw.Tpo -c -o chatnut-connection_raw.o `test -f 'connection_raw.c' || echo '$(srcdir)/'`connection_raw.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chatnut-connection_raw.Tpo $(DEPDIR)/chatnut-connection_raw.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='connection_raw.c' object='chatnut-connection_raw.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-connection_raw.o `test -f 'connection_raw.c' || echo '$(srcdir)/'`connection_raw.c
-
-chatnut-connection_raw.obj: connection_raw.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -MT chatnut-connection_raw.obj -MD -MP -MF $(DEPDIR)/chatnut-connection_raw.Tpo -c -o chatnut-connection_raw.obj `if test -f 'connection_raw.c'; then $(CYGPATH_W) 'connection_raw.c'; else $(CYGPATH_W) '$(srcdir)/connection_raw.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chatnut-connection_raw.Tpo $(DEPDIR)/chatnut-connection_raw.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='connection_raw.c' object='chatnut-connection_raw.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(chatnut_CFLAGS) $(CFLAGS) -c -o chatnut-connection_raw.obj `if test -f 'connection_raw.c'; then $(CYGPATH_W) 'connection_raw.c'; else $(CYGPATH_W) '$(srcdir)/connection_raw.c'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
