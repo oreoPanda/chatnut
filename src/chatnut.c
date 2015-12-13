@@ -1,316 +1,99 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*-  */
-/*
- * message_client.c
- * Copyright (C) 2014 
- * 
- * message is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * message is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+/*chatnut.c*/
 
-//TODO receive server's connected message so this client knows it didn't just try to connect but it actually connected
-//TODO have terminal default be no echo so there are no "floating" q's and m's and /'s on the screen?
-//NOTE: 3-way handshake seems to be done by connect(), accept() comes later. That's why I'm using conn_msg as a connected status message.
-
-#include <gtk/gtk.h>
-
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "getch.h"
-#include "messaging.h"
+#include <sys/stat.h>	//for mkdir()
+
 #include "connection.h"
+#include "connection_raw.h"
+#include "gui.h"
 
-GIOChannel *channel = NULL;
-GtkWidget *window, *grid, *textinputview, *textoutputview, *list;
-int connected = FALSE;
-int receiver_set = FALSE;
-int name_set = FALSE;
+typedef enum reply commandreply;
 
-enum
+enum reply
 {
-    NAME_COLUMN,
-    ONLINE_COLUMN,
-    N_COLUMNS
+	CONNECTED = 48,
+	HELP,
+	LIST,
+	BUDDY_IS_SET,
+	BUDDY_IS_UNSET,
+	BUDDY_NOT_EXIST,
+	LOGIN_SUCCESS,
+	LOGIN_FAILURE,
+	REGISTRATION_SUCCESS,
+	REGISTRATION_FAILURE,
+	LOOKUP_SUCCESS,
+	LOOKUP_FAILURE,
+	MESSAGE,
+	NOARG,
+	NOMEM,
+	ERROR
 };
 
-char *load_message_history( char *contact, int max_messages )
+gboolean login_status = FALSE;
+char *user = NULL;
+char *currentbuddy = NULL;
+
+struct actiondata
 {
-    FILE *message_log;
-    char *messages;
-    char *path = NULL;
+	char *name;
+}pending_action_data;
 
-    //create path
-    path = calloc( 5+strlen(contact)+4+1, sizeof(char) );	//"data/" + contact ".txt" + "\0"
-    strncpy( path, "data/", 5 );
-    strncpy( path+5, contact, strlen(contact) );
-    strncpy( path+5+strlen(contact), ".txt", 4 );
-    path[5+strlen(contact)+4] = '\0';
+//TODO check if strncpy and strncat return values matter for moved strings
 
-    message_log = fopen( path, "r" );
-    if( message_log == NULL )
-    {
-        //TODO
-        return NULL;
-    }
+/*stuff that interacts with the graphic*/
 
-    fseek( message_log, 0, SEEK_END );
-    int file_len = ftell(message_log);		//all characters + one additional '\n'
-    rewind(message_log);
-    messages = calloc( file_len+1, sizeof(char) );	//all characters + '\n' + '\0'
-    fread( messages, sizeof(char), file_len, message_log );
-    return messages;
-}
-
-void contact_selection_handler( GtkTreeSelection *selection, GtkTextView *message_view )
+static GtkListStore *create_contact_list_model()
 {
-    GtkTreeIter iter;
-    GtkTreeModel *model;
-    char *contact_name;
-    GtkTextBuffer *messageview_buffer;
-
-    if( gtk_tree_selection_get_selected( selection, &model, &iter ) )
-    {
-        char *history;
-        
-        //get the selected contact's name and load it's chat history into the message_view
-        gtk_tree_model_get( model, &iter, NAME_COLUMN, &contact_name, -1 );
-        history = load_message_history( contact_name, 30 );
-        messageview_buffer = gtk_text_view_get_buffer( message_view );
-        if( history )
-        {
-            gtk_text_buffer_set_text( messageview_buffer, history, -1 );	//-1 cuz text is terminated
-        }
-        else
-        {
-            gtk_text_buffer_set_text( messageview_buffer, "<No recent chats found>", -1 );	//-1 cuz text is terminated
-        }
-        free(history);
-
-        /*send the server a /unwho command and a /who command to specify who we're talking to*/
-        // /unwho
-        char *command = "/unwho";
-        g_io_add_watch( channel, G_IO_OUT, channel_data_out_handle, command );
-        // /who contact_name
-        command = calloc( strlen("/who")+strlen(contact_name)+1, sizeof(char) );
-        strncpy( command, "/who", 4 );
-        strncat( command, contact_name, strlen(contact_name) );
-        send_outgoing( channel, command );
-        
-        g_free(command);
-        g_free(contact_name);
-    }
-}
-
-static void backspace_handler( GtkTextView *textView, gpointer data )
-{
-    printf( "Backspace received!\n" );
-}
-
-gboolean key_pressed( GtkWidget *textinput, GdkEventKey *event, GtkWidget *textlog )	//textinput is the message input one, textlog the message history
-{
-    if( (event->state & GDK_SHIFT_MASK) )	//if shift is held down, return right away (shift-enter shall be newline, like skype or pidgin do, too)
-    {
-            return FALSE;
-    }
-
-    GtkTextBuffer *sourceBuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textinput));	//get buffer of input textview
-    GtkTextBuffer *destinationBuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textlog));	//get buffer of output textview
-
-    switch( event->keyval )
-    {
-        case GDK_KEY_Return:
-        {
-            char *text = NULL;
-            GtkTextIter start;
-            GtkTextIter end;
-
-            //get text from sourceBuffer if it is not empty
-            if( gtk_text_buffer_get_char_count(sourceBuffer) > 0 )
-            {
-                gtk_text_buffer_get_bounds( sourceBuffer, &start, &end );
-                text = gtk_text_buffer_get_text( sourceBuffer, &start, &end, FALSE );
-            }
-            else return TRUE;	//event was handled, '\n' will not be printed (would be if FALSE is returned)
-            
-            //send text to server
-            send_outgoing( channel, text );
-
-            //let the text start in a new line in the destination buffer (by adding a '\n' at index 0)
-            if( gtk_text_buffer_get_char_count(destinationBuffer) > 0 )
-            {
-                int text_len = strlen(text);
-                char temp[text_len+1];
-                strncpy(temp, text, text_len);
-                temp[text_len] = '\0';
-                text = realloc( text, sizeof(char) * (text_len+2) );	//+2: \n...\0
-                strncpy( text+1, temp, text_len+1 );
-                text[0] = '\n';
-                text[text_len+1] = '\0';
-            }
-            gtk_text_buffer_set_text( sourceBuffer, "", -1 );//remove text from typing window
-
-            //append text to destinationBuffer
-            gtk_text_buffer_get_end_iter( destinationBuffer, &end );
-            gtk_text_buffer_insert( destinationBuffer, &end, text, -1 );
-            return TRUE;	//so the newline from enter doesn't make it into the buffer again
-            break;
-        }
-        default:
-        {
-                break;
-        }
-    }
-
-    return FALSE;	//if this returned TRUE, the GtkTextView would never show the pressed key because the event won't be handled further after this function (so typing in a message won't ever make the message appear in the GtkTextView or even in the GtkTextBuffer)
-}
-
-//TODO the destroy signal needs to call a quit function, the quit function needs to shutdown the GIOChannel and call gtk_main_quit
-GtkWidget *set_window()
-{
-    GtkWidget *window;
-    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-
-    //signals associated with the main window
-    g_signal_connect( window, "destroy", G_CALLBACK(gtk_main_quit), NULL );
-
-    //graphical window properties
-    gtk_window_set_title( GTK_WINDOW(window), "Hello" );
-    gtk_container_set_border_width( GTK_CONTAINER(window), 10 );	//this only has an effect if there are widgets shown inside the given widget (window in this case)
-
-    return window;
-}
-
-GtkWidget *set_grid()
-{
-    GtkWidget *grid;
-    grid = gtk_grid_new();
-    gtk_grid_set_row_spacing( GTK_GRID(grid), 5);
-    gtk_grid_set_column_spacing( GTK_GRID(grid), 5);
-
-    return grid;
-}
-
-GtkWidget *set_message_history_area()
-{
-	GtkWidget *textviewer;
-	textviewer = gtk_text_view_new();
-	gtk_text_view_set_right_margin( GTK_TEXT_VIEW(textviewer), 30 );
-	gtk_text_view_set_editable( GTK_TEXT_VIEW(textviewer), FALSE );
-	gtk_text_view_set_cursor_visible( GTK_TEXT_VIEW(textviewer), FALSE );
-
-	return textviewer;
-}
-
-GtkWidget *set_message_input_area()
-{
-	GtkWidget *text_input_field;
-	text_input_field = gtk_text_view_new();
-	//signals
-	g_signal_connect( text_input_field, "backspace", G_CALLBACK(backspace_handler), NULL );
-	g_signal_connect( text_input_field, "key-press-event", G_CALLBACK(key_pressed), textoutputview );
-
-	return text_input_field;
-}
-
-void evaluate_incoming( char *message )
-{
-    //check whether it is a command reply, a message, or the "connected" signal
-    //add to the buffer of textoutputview if it is a message
-
-    g_print( "Evaluating incoming message.\n" );
-
-    if( strncmp( message, conn_msg, CONN_MSG_LEN-1 ) == 0 )
-    {
-            printf( "Server accepted connection.\n" );
-            connected = TRUE;
-    }
-    else
-    {
-        int indicator = message[0];		//indicates whether it is a message or a command reply
-
-        switch(indicator)
-        {
-            case NAME_IS_SET:
-            {
-                    name_set = TRUE;
-                    break;
-            }
-            case BUDDY_IS_SET:
-            {
-                    receiver_set = TRUE;
-                    break;
-            }
-            default:
-            {
-                    GtkTextBuffer *message_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textoutputview));
-                    GtkTextIter start, end;
-                    gtk_text_buffer_get_bounds( message_buffer, &start, &end );
-                    gtk_text_buffer_insert( message_buffer, &end, message, -1 );
-                    break;
-            }
-        }
-    }
-}
-
-void construct_main_window()
-{
-	gtk_container_add( GTK_CONTAINER(window), grid );
-
-	gtk_grid_attach( GTK_GRID(grid), textoutputview, 0, 1, 2, 1 );
-	gtk_grid_attach( GTK_GRID(grid), textinputview, 0, 2, 2, 1 );
-	gtk_grid_attach( GTK_GRID(grid), list, 2, 0, 1, 3 );
-
-	gtk_widget_show(textoutputview);
-	gtk_widget_show(textinputview);
-	gtk_widget_show(list);
-
-	/*show*/
-	gtk_widget_show(grid);
-	gtk_widget_show(window);
-}
-
-GtkListStore *create_contact_list_model()
-{
-	GtkListStore *store;
+	GtkListStore *store = NULL;
 	GtkTreeIter iter;
+
 	FILE *contactlist = NULL;
+	char *path = NULL;
+	char *homedir = getenv("HOME");
+	int pathlen = 0;
+	int raw_list_len;
+	char *raw_list = NULL;
+	char *name = NULL;
 
-	/*create contact list model*/
-	store = gtk_list_store_new( N_COLUMNS, G_TYPE_STRING, G_TYPE_BOOLEAN );
+	//TODO don't try to load contacts if there are none in file...
 
-	contactlist = fopen( "data/contacts.txt", "r" );
+	/*generate path to contact list file*/
+	pathlen = strlen(homedir) + 1 + strlen(".chatnut") + 1 + strlen(user) + 1 + strlen("contactlist") + 1;
+	path = calloc( pathlen, sizeof(char) );
+	path = strncpy( path, homedir, strlen(homedir) + 1 );
+	path = strncat( path, "/", 1 );
+	path = strncat( path, ".chatnut", strlen(".chatnut") );
+	path = strncat( path, "/", 1 );
+	path = strncat( path, user, strlen(user) );
+	path = strncat( path, "/", 1 );
+	path = strncat( path, "contactlist", strlen("contactlist") );
+
+	/*open contact list file and load its contents into memory*/
+	contactlist = fopen( path, "r" );
 	if( contactlist == NULL )
 	{
 		return store;
 	}
 	else
 	{
+		/*create contact list model with name and online status for each contact*/
+		store = gtk_list_store_new( 2, G_TYPE_STRING, G_TYPE_BOOLEAN );
+
 		//get file length
-        fseek( contactlist, 0, SEEK_END );
-		int listlen = ftell(contactlist);
+		fseek( contactlist, 0, SEEK_END );
+		raw_list_len = ftell(contactlist);
 		rewind(contactlist);
 		//set up data buffer
-		char *raw_list = calloc( listlen+1, sizeof(char) );	//one extra for '\0'
+		raw_list = calloc( raw_list_len+1, sizeof(char) );	//one extra for '\0'
 		//read from file
-		fread( raw_list, sizeof(char), listlen, contactlist );
-		raw_list[listlen] = 0;
+		fread( raw_list, sizeof(char), raw_list_len, contactlist );
+		raw_list[raw_list_len] = 0;
 		fclose(contactlist);
 
 		//crunch data
 		int i = 0;
-		int nameLen = 0;
-		char *name = NULL;
 		while( raw_list[i] != 0 )
 		{
 			//get one name at a time
@@ -321,89 +104,549 @@ GtkListStore *create_contact_list_model()
 			}
 			int nameLen = i-name_pos;
 			name = calloc( nameLen+1, sizeof(char) );	//name + '\0'
-			strncpy( name, raw_list+name_pos, nameLen );
-			name[nameLen] = 0;
+			strncpy( name, raw_list+name_pos, nameLen );	//right after raw_list[nameLen] is a '\n', so strncpy wouldn't put a '\0'
+			name[i] = '\0';		//adding terminator here cuz strncpy wouldn't do it in this case
 			i++;//skip past '\n'
 
 			//add the name to the contact list model
 			gtk_list_store_append( store, &iter );
-			gtk_list_store_set( store, &iter, NAME_COLUMN, name, ONLINE_COLUMN, FALSE, -1 );
+			gtk_list_store_set( store, &iter, 0, name, 1, FALSE, -1 );
+
+			free(name);
 		}
+
+		free(raw_list);
 
 		return store;
 	}
 }
 
-int main(int argc, char *argv[])
+/*returns a pointer to the part of message where the actual message begins, this pointer should not be freed separately from message*/
+const char *strip_username( const char *message, char **username )
 {
-	/*set up networking*/
-	socket_t sock;
+	int usernamelength = -1;
 
-	if( argc != 3 )
+	/*calculate length of username*/
+	while( *(message + ++usernamelength) != ' ' );
+
+	/*copy username from message*/
+	*username = calloc( usernamelength+1, sizeof(char) );
+	strncpy( *username, message, usernamelength+1 );//copies a space to last index
+	*( *(username)+usernamelength ) = '\0';
+
+	/*message_only should point to the start of the actual message*/
+	const char *message_only = message+usernamelength+1;
+
+	return message_only;
+}
+
+//stores history of contact in to
+void load_history( const char *contact, char **to )
+{
+	FILE *history_file = NULL;
+	int file_len = 0;
+	const char *filename = contact;
+	char *path = NULL;
+
+
+	/*generate path to historyfile*/
+	path = calloc( strlen(getenv("HOME")) + 1
+				+ strlen(".chatnut") + 1
+				+ strlen(user) + 1
+				+ strlen("history") + 1,
+				sizeof(char) );
+	strncpy( path, getenv("HOME"), strlen(getenv("HOME"))+1 );
+	strncat( path, "/", 1 );
+	strncat( path, ".chatnut", strlen(".chatnut") );
+	strncat( path, "/", 1 );
+	strncat( path, user, strlen(user) );
+	strncat( path, "/", 1 );
+	strncat( path, "history", strlen("history") );
+
+	/*switch to directory*/
+	if( chdir(path) != 0 )
 	{
-		printf( "Usage: %s [server address] [port]\n", *argv );
-		return 1;
+		mkdir( path, 0755 );
+		chdir(path);	//TODO error?
+	}
+	free(path);
+
+	/*open file and read from it*/
+	history_file = fopen( filename, "r" );		//NULL check if file not found (errno)
+	if( history_file != NULL )
+	{
+		fseek( history_file, 0, SEEK_END );
+		//TODO check these comments, they seem confusing...
+		file_len = ftell(history_file);		//all characters + one additional '\n'
+		rewind(history_file);
+		*to = calloc( file_len, sizeof(char) );	//all characters (including additional '\n') + '\0' (TODO check: the '\n' is part of all characters)
+		fread( *to, sizeof(char), file_len, history_file );
+		*( *to+(file_len) ) = '\0';
+	}
+	else
+	{
+		*to = NULL;		//set the history storage buffer to NULL
+		//TODO log error or simply no history there yet...
 	}
 
-	/*create TCP socket and connect to server*/
-	sock = create_socket( PF_INET, SOCK_STREAM, 0 );
-	connect_socket( &sock, argv[1], atoi(argv[2]) );
-	printf( "Waiting for server...\n" );
-	//done
+	return;
+}
 
-	/*set up a GIOChannel*/
-	channel = g_io_channel_unix_new(sock);
-	g_io_add_watch( channel, G_IO_IN, channel_data_in_handle, NULL );
-        g_io_add_watch( channel, G_IO_ERR, channel_error_handle, NULL );
-        g_io_add_watch( channel, G_IO_HUP, channel_hungup_handle, NULL );
-	//done
-	//done setting up networking
+void append_to_history( const char *message, const char *username )
+{
+	FILE *historyfile = NULL;
+	char *historypath = NULL;
+	const char *historyfilename = username;
 
+	/*generate path to historyfile*/
+	historypath = calloc( strlen(getenv("HOME")) + 1
+						+ strlen(".chatnut") + 1
+						+ strlen(user) + 1
+						+ strlen("history") + 1,
+						sizeof(char) );
+	strncpy( historypath, getenv("HOME"), strlen(getenv("HOME"))+1 );
+	strncat( historypath, "/", 1 );
+	strncat( historypath, ".chatnut", strlen(".chatnut") );
+	strncat( historypath, "/", 1 );
+	strncat( historypath, user, strlen(user) );
+	strncat( historypath, "/", 1 );
+	strncat( historypath, "history", strlen("history") );
+
+	/*switch to directory*/
+	if( chdir(historypath) != 0 )
+	{
+		mkdir( historypath, 0755 );
+		chdir(historypath);			//TODO error?
+	}
+	free(historypath);
+
+	/*open file and write to it*/
+	historyfile = fopen( historyfilename, "a" );		//NULL check if file not found (errno)
+	if(historyfile)
+	{
+		fprintf( historyfile, "%s\n", message );
+		fclose(historyfile);	//TODO log an error if there is one
+	}
+	else
+	{
+		//TODO log error
+	}
+
+	return;
+}
+
+gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event, gpointer data )
+{
+	GdkModifierType state;
+	guint keyval;
+	GtkTextBuffer *inputbuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(inputview));
+	GtkTextIter start;
+	GtkTextIter end;
+	gchar *text = NULL;
+
+	gdk_event_get_state( event, &state );
+	gdk_event_get_keyval( event, &keyval );		//keyvals from <gdk/gdkkeysyms.h>
+
+	switch(state)
+	{
+		case GDK_SHIFT_MASK:
+		{
+			return FALSE;
+		}
+		default:
+		{
+			break;
+		}
+	}
+	switch(keyval)
+	{
+		case GDK_KEY_Return:
+		{
+			/*get text from buffer*/
+			gtk_text_buffer_get_bounds( inputbuffer, &start, &end );
+			text = gtk_text_buffer_get_text( inputbuffer, &start, &end, FALSE );//TODO with hidden chars FALSE, embedded images won't copy
+
+			/*send textstring to server*/
+			write_to_channel( text, user );
+
+			/*append textstring to history and maybe to historyview*/
+			append_to_history( text, currentbuddy );
+			append_to_history_view( text, user );
+
+			/*free text, since it is a non-const string returned from a gtk function*/
+			g_free(text);
+		}
+	}
+
+	return FALSE;
+}
+
+//TODO error when /who fails
+static void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treepath, GtkTreeViewColumn *column, gpointer data )
+{
+	GtkTreeSelection *selection = NULL;
+	GtkTreeIter iter;		//will be set to the selected row
+	GtkTreeModel *model;
+	char *contact_name;
+	char *history;
+
+	selection = gtk_tree_view_get_selection(treeview);
+
+	if( gtk_tree_selection_get_selected( selection, &model, &iter ) )	//set model and iter
+	{
+		//get the selected contact's name and load it's chat history into the message_view
+		gtk_tree_model_get( model, &iter, 0, &contact_name, -1 );
+		load_history( contact_name, &history );
+		show_message_history( contact_name, history );
+		free(history);
+
+		/*if connected, send the server a /unwho command and a /who command to specify who we're talking to*/
+		// /unwho
+		if( channel_not_null() )
+		{
+			char *command = NULL;
+
+			// /unwho
+			command = calloc( strlen("/unwho") + 1, sizeof(char) );
+			strncpy( command, "/unwho", 7 );
+			write_to_channel( command, NULL );
+
+			// /who [contact_name]
+			command = realloc( command, sizeof(char) * ( strlen("/who ") + strlen(contact_name) + 1 ) );
+			strncpy( command, "/who ", 6 );
+			strncat( command, contact_name, strlen(contact_name) );
+			write_to_channel( command, NULL );
+
+			enable_input_view(input_view_key_pressed_cb);
+
+			//TODO g_free() or free(), difference??
+			free(command);
+		}
+
+		//write name into pending_action_data for BUDDY_IS_SET handler
+		pending_action_data.name = calloc( strlen(contact_name) + 1, sizeof(char) );
+		strncpy( pending_action_data.name, contact_name, strlen(contact_name) + 1 );
+	}
+
+	return;
+}
+
+//the BUDDY_IS_SET handler
+static void contact_selected_finish()
+{
+	if(currentbuddy)		//TODO check for smarter way to do this
+	{
+		free(currentbuddy);
+	}
+	currentbuddy = calloc( strlen(pending_action_data.name) + 1, sizeof(char) );
+	strncpy( currentbuddy, pending_action_data.name, strlen(pending_action_data.name) + 1 );
+	free(pending_action_data.name);
+	pending_action_data.name = NULL;
+
+	return;
+}
+
+static void add_contact_finish()
+{
+	FILE *contactfile = NULL;
+	char *path = NULL;
+	char *filename = "contactlist";	//is this on heap or stack? no malloc(), so no free() or?
+
+	char *contact = calloc( strlen(pending_action_data.name) + 1, sizeof(char) );
+	strncpy( contact, pending_action_data.name, strlen(pending_action_data.name) + 1 );
+	free(pending_action_data.name);
+	pending_action_data.name = NULL;
+
+	/*generate path to contactlist ( $HOME/.chatnut/[username]/contactlist )*/
+	path = calloc( strlen(getenv("HOME")) + 1
+				+ strlen(".chatnut")
+				+ strlen(user) + 1,
+				sizeof(char) );
+	strncpy( path, getenv("HOME"), strlen(getenv("HOME")) + 1 );	//need to evaluate return value? (not copied on heap like realloc()...)
+	strncat( path, "/", 1 );
+	strncat( path, ".chatnut", strlen(".chatnut") );
+	strncat( path, "/", 1 );
+	strncat( path, user, strlen(user) );
+
+	/*switch to directory*/
+	if( chdir(path) != 0 )
+	{
+		mkdir( path, 0755 );
+		chdir(path);			//TODO error?
+	}
+	free(path);
+
+	/*open file and write to it*/
+	contactfile = fopen( filename, "a" );		//NULL check if file not found (errno)
+	if(contactfile)
+	{
+		fprintf( contactfile, "%s\n", contact );
+		fclose(contactfile);
+	}
+	else
+	{
+		perror("(add_contact_finish)");		//TODO log an error
+	}
+
+	free(contact);
+
+	return;
+}
+
+//TODO this is static, but called from other file. This may work cuz it is opened thru pointer passed from this file
+static gboolean add_contact_response_handle( GtkDialog *dialog, gint response_id, gpointer data )
+{
+	switch(response_id)
+	{
+		case GTK_RESPONSE_OK:
+		{
+			int commandlen = 0;
+			char *command = NULL;
+			GtkEntryBuffer *buffer = NULL;
+
+			/*read contact name*/
+			buffer = data;
+			const gchar *contact = gtk_entry_buffer_get_text(buffer);
+
+			pending_action_data.name = (char *)contact;
+
+			/*ask server if the given contact exists*/
+			commandlen = strlen("/lookup ") + strlen(contact) + 1;	//strlen + space for NULL
+			command = calloc( commandlen, sizeof(char) );
+			strncpy( command, "/lookup ", 9 );	//"/who " + NULL
+			strncat( command, contact, strlen(contact) );
+			//TODO check is over-engineering or? actually no, since server may leave before user clicks "Add Contact" button
+			if( channel_not_null() && login_status == TRUE )
+			{
+				write_to_channel( command, NULL );
+			}
+			free(command);
+
+			gtk_widget_destroy(GTK_WIDGET(dialog));
+
+			break;
+		}
+		case GTK_RESPONSE_CANCEL:
+		{
+			gtk_widget_destroy(GTK_WIDGET(dialog));
+
+			break;
+		}
+		default:
+		{
+			//TODO use a different error report for this, print_error is for connection_raw.c and should not be in connection_raw.h
+			print_error("Unhandled response id for GtkDialog");
+
+			break;
+		}
+	}
+	return G_SOURCE_REMOVE;
+}
+
+//TODO same as above
+static gboolean add_contact_button_clicked( GtkButton *button, gpointer data )
+{
+	printf("Adding contact...\n");
+
+	/*open a new window where the user enters the contacts name*/
+	popup_add_contact(add_contact_response_handle);
+
+	//FIXME return value doesn't seem to matter
+	return G_SOURCE_CONTINUE;
+}
+
+static void login_finish(void)
+{
+	login_status = TRUE;
+	//TODO user needs to be free()d at some point in (run)time
+	user = calloc( strlen(pending_action_data.name) + 1, sizeof(char) );
+	strncpy( user, pending_action_data.name, strlen(pending_action_data.name)+1 );
+	free(pending_action_data.name);
+	pending_action_data.name = NULL;
+
+	return;
+}
+
+/*TODO would make more sense if login isn't possible if not connected*/
+static gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
+{
+	int commandlen = 0;
+	char *command = NULL;
+	GtkEntryBuffer **bufferlist = data;
+	GtkEntryBuffer *usernamebuffer = *bufferlist;
+	GtkEntryBuffer *passwordbuffer = *(bufferlist+1);
+
+	/*get username and password, const, so should not be free()ds*/
+	const char *username = gtk_entry_buffer_get_text(usernamebuffer);
+	const char *password = gtk_entry_buffer_get_text(passwordbuffer);
+
+	/*create and send login command to server*/
+	commandlen = strlen("/login ")
+					+ strlen(username)
+					+ 1			//space
+					+ strlen(password)
+					+ 1;		//NULL
+	command = calloc( commandlen, sizeof(char) );
+	strncpy( command, "/login ", 8 );	//"/login " + NULL
+	strncat( command, username, strlen(username) );
+	strncat( command, " ", 1 );
+	strncat( command, password, strlen(password) );
+
+	//TODO test what happens here when server leaves while user types in username and password
+		//thought: server leaves, this command is written, G_IO_CHANNEL_HUNGUP gets emitted but not handled
+			//next thing that happens is a read with 0 (EOF), and client should work normally
+	//TODO for over-engineering, see function above
+	if( channel_not_null() )
+	{
+		write_to_channel( command, NULL );
+	}
+
+	//copy username for later use, don't free username or passwords
+	pending_action_data.name = calloc( strlen(username) + 1, sizeof(char) );
+	strncpy( pending_action_data.name, username, strlen(username)+1 );
+
+	free(command);
+
+	gtk_widget_destroy(GTK_WIDGET(dialog));
+
+	return G_SOURCE_REMOVE;
+}
+
+static void create_gui(void)
+{
+	create_window();
+	create_main_pane();
+	create_left_pane();
+	create_history_scrollbox();
+	create_history_view();
+	create_input_scrollbox();
+	create_input_view();
+	create_right_grid();
+	create_label("You are not logged in yet.");
+	create_buttons();
+
+	populate_window();
+	functionalize_window(add_contact_button_clicked);
+
+	return;
+}
+
+/*here we go with the non-graphical stuff*/
+
+static void evaluate_incoming(const char *data)
+{
+	commandreply indicator = *data;
+	const char *message = data+1;
+
+	g_print("(evaluate_incoming)Evaluating incoming message.\n");
+
+	switch(indicator)
+	{
+		case CONNECTED:
+		{
+			printf( "(evaluate_incoming)Connected\n");
+
+			g_idle_add( popup_login, login );
+			break;
+		}
+		case LOGIN_FAILURE:
+		{
+			printf( "(evaluate_incoming)Login failure\n");
+
+			g_idle_add( popup_login, login );
+			break;
+		}
+		case LOGIN_SUCCESS:
+		{
+			printf( "(evaluate_incoming)Login success\n");
+
+			login_finish();
+
+			/*load and show contacts*/
+			destroy_label();
+			GtkListStore *model = create_contact_list_model();
+			if(model)
+			{
+				create_list_view(model);
+				functionalize_list_view(contact_selection_handler);
+			}
+			else
+			{
+				create_label("You don't have any contacts yet.");
+			}
+			populate_window_with_list_or_label();
+			break;
+		}
+		case BUDDY_IS_SET:
+		{
+			printf( "(evaluate_incoming)BUDDY_IS_SET\n");
+
+			contact_selected_finish();
+
+			break;
+		}
+		case BUDDY_IS_UNSET:
+		{
+			printf( "(evaluate_incoming)BUDDY_IS_UNSET\n");
+
+			break;
+		}
+		case BUDDY_NOT_EXIST:
+		{
+			printf( "(evaluate_incoming)BUDDY_NOT_EXIST\n");
+
+			free(pending_action_data.name);
+			pending_action_data.name = NULL;
+
+			break;
+		}
+		case LOOKUP_FAILURE:
+		{
+			printf( "(evaluate_incoming)Lookup failure\n");
+			break;
+		}
+		/*process of choosing buddy works, code analysis needs to be done TODO*/
+		case LOOKUP_SUCCESS:
+		{
+			printf( "(evaluate_incoming)Lookup success\n");
+			add_contact_finish();
+			break;
+		}
+		case MESSAGE:
+		{
+			/*get username string and a pointer to the actual message part of message*/
+			char *username = NULL;
+			const char *raw_message = strip_username( message, &username );//raw_message should not be freed, username should be
+
+			//TODO I got up to here checking the process of an incoming message, continue checking below this line
+
+			/*append the actual message to history*/
+			append_to_history( raw_message, username );
+			if( strcmp( currentbuddy, username ) == 0 )
+			{
+				append_to_history_view( raw_message, username );
+			}
+
+			free(username);
+
+			break;
+		}
+		default:
+		{
+			g_print( "(evaluate_incoming)Unknown command reply %d\n", indicator );
+			g_print( "(evaluate_incoming)Might be message %s\n", message );
+			break;
+		}
+	}
+}
+
+/*alright let's not forget the main function :D*/
+
+int main( int argc, char *argv[] )
+{
 	gtk_init( &argc, &argv );
-
-	/*set up the window and its components (two text areas and a contact list)*/
-	window = set_window();
-	grid = set_grid();
-	textoutputview = set_message_history_area();	//text viewer
-	textinputview = set_message_input_area();
-
-
-	//done setting up
-	GtkListStore *store = create_contact_list_model();
-	GtkCellRenderer *renderer;
-	GtkTreeViewColumn *column;
-
-
-	//graphical, create a GtkTreeView
-	list = gtk_tree_view_new_with_model( GTK_TREE_MODEL(store) );
-	gtk_tree_view_set_headers_visible( GTK_TREE_VIEW(list), FALSE );
-
-	//name column
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new();
-	column = gtk_tree_view_column_new_with_attributes( "Name", renderer, "text", NAME_COLUMN, NULL );//"text" is an attribute (property) of a GtkCellRendererText
-	gtk_tree_view_append_column( GTK_TREE_VIEW(list), column );
-
-	//online column
-	renderer = gtk_cell_renderer_toggle_new();
-	gtk_cell_renderer_toggle_set_radio( GTK_CELL_RENDERER_TOGGLE(renderer), TRUE );
-	gtk_cell_renderer_toggle_set_activatable( GTK_CELL_RENDERER_TOGGLE(renderer), TRUE );
-	column = gtk_tree_view_column_new();
-	column = gtk_tree_view_column_new_with_attributes( "Online", renderer, "active", ONLINE_COLUMN, NULL );//"active" is an attribute (property) of a GtkCellRendererToggle, this function takes all values out of that column in the GtkListStore and puts them into cells and renders them.
-	gtk_tree_view_append_column( GTK_TREE_VIEW(list), column );
-
-	//selection handle
-	GtkTreeSelection *selection;
-	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(list));	//not the actual selection, just an object that will be associated with the "changed" event/signal
-	gtk_tree_selection_set_mode( selection, GTK_SELECTION_SINGLE );
-	g_signal_connect( G_OBJECT(selection), "changed", G_CALLBACK(contact_selection_handler), textoutputview );
-
-
-	construct_main_window();
+	g_timeout_add_seconds( 1, watch_connection, evaluate_incoming );
+	create_gui();
 	gtk_main();
-
-	close_socket(&sock);
-	cleanup();
-
 	return EXIT_SUCCESS;
 }

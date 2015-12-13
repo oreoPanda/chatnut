@@ -1,2 +1,0 @@
-# chatnut
-Go nuts chatting!

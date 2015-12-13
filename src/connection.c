@@ -1,303 +1,336 @@
-/*socketlayer.c - for UNIX*/
+/*connection.c*/
 
 #include "connection.h"
+#include "connection_raw.h"
+#include "jstring.h"
 
-/*void reset_timeout(struct timeval *timeout)
+GIOChannel *channel = NULL;
+gboolean connected = FALSE;		//only used by watch_connection and channel_in_handle
+
+extern gboolean channel_not_null(void)
 {
-	timeout->tv_sec = 0;
-	timeout->tv_usec = 10,000; //microseconds: 1,000,000 of them each second, here process will sleep for one 100th of a second
-}*/
-
-/*exit with custom error message*/
-void error_exit(char *error_message)
-{
-	fprintf( stderr, "%s: %s\n", error_message, strerror(errno) );
-
-	exit(EXIT_FAILURE);
-}
-
-/*create a socket*/
-int create_socket(int af, int type, int protocol)
-{
-	socket_t sock;
-	const int y = 1;
-
-	sock = socket( af, type, protocol );
-	if( sock < 0 )		//check if it worked
+	if(channel)
 	{
-		error_exit("Error creating socket!");
-	}
-	
-	setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, &y, sizeof(int) );//SO_REUSEADDR makes the socket not be unusable for two minutes after server closes
-
-	return sock;
-}
-
-void bind_socket(socket_t *sock, unsigned long address, unsigned short port)
-{
-	struct sockaddr_in server;
-
-	memset( &server, 0, sizeof(server) );	//fill structure with zeroes to erase false data
-
-	server.sin_family = AF_INET;
-	server.sin_port = htons(port);
-	server.sin_addr.s_addr = htonl(address);
-
-	if( bind( *sock, (struct sockaddr*)&server, sizeof(server) ) < 0 )
-	{
-		error_exit("Error binding socket to port!" );
-	}
-}
-#define CLIENT_MAX 5
-void listen_socket(socket_t *sock)
-{
-	if( listen(*sock, CLIENT_MAX) == -1)		//will set up queue with length CLIENT_MAX, kernel has a longer queue so more than CLIENT_MAX unconnected clients might be connect()ed successfully
-	{
-		error_exit("Error listening for connections!");
-	}
-}
-
-void connect_socket(socket_t *sock, char *server_addr, unsigned short port)
-{
-	struct sockaddr_in server;
-	struct hostent *host_info;
-	unsigned long ip_addr;
-
-	memset( &server, 0, sizeof(server) );	//fill structure with zeroes to erase false data
-
-	/*copy the ip address into the server address structure*/
-	ip_addr = inet_addr(server_addr);	//turn ip into unsigned long
-	if( ip_addr != INADDR_NONE )	//if it is a numeric ip
-	{
-		memcpy( (char*)&server.sin_addr, &ip_addr, sizeof(ip_addr) );//copy the unsigned long into the structure
-	}
-	else		//if it is a string address that needs to be resolved (like "localhost")
-	{
-		host_info = gethostbyname( server_addr );
-		if( host_info == NULL )		//if resolving didn't quite work
-		{
-			error_exit("Error resolving server address (unknown server)!");
-		}
-		else
-		{
-			#define h_addr h_addr_list[0]
-			memcpy( (char*)&server.sin_addr, host_info->h_addr, host_info->h_length );//copy the resolved address into structure
-		}
-	}
-
-	/*copy the protocol family and the port number into the structure*/
-	server.sin_family = AF_INET;
-	server.sin_port = htons(port);
-
-	/*connect to server and check if connecting worked*/
-	if( connect( *sock, (struct sockaddr*)&server, sizeof(server) ) < 0)
-	{
-		error_exit("Error connecting to server!");
+		return TRUE;
 	}
 	else
 	{
-		//say who the client is connected to
-		printf( "Connected to server with address %s\n", inet_ntoa(server.sin_addr) );
+		return FALSE;
 	}
 }
 
-void my_select( int numfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout )
+static void create_channel(int fd)
 {
-	if( select(numfds, readfds, writefds, exceptfds, timeout) == -1)//+1 was already done
-	{
-		error_exit("Error select()ing socket!");
-	}
-}
-
-
-void accept_socket( socket_t *sock, socket_t *new_sock )
-{
-	struct sockaddr_in client;
-	unsigned int len;
-
-	len = sizeof(client);
-	*new_sock = accept( *sock, (struct sockaddr*)&client, &len );
-	if( *new_sock == -1 )	//if none found
-	{
-		error_exit("Error accepting connection!");
-	}
-	else
-	{
-		/*say who the server is connected to*/
-		printf( "Connected to client with address %s\n", inet_ntoa(client.sin_addr) );
-
-		/*char *msg = "hi\0";
-		int len = 3;
-		TCP_send( new_sock, msg, len, 0 );*/
-	}
-}
-
-/*receive incoming data, this function is called when the GIOChannel is ready for reading
- *these should be considered as GIOFuncs
- *GLib Reference Manual says: "the function should return FALSE if the event source should be removed"*/
-//important for all of them: data is the data passed via g_io_add_watch(), not the data waiting in socket)
-gboolean channel_data_in_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
-{
-    receive_incoming( sourcechannel, data );
-            
-    return FALSE;
-}
-
-gboolean channel_data_out_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
-{
-    send_outgoing( sourcechannel, data );
-    g_io_channel_unref(sourcechannel);  //decrement reference count, which should disconnect this callback
-    
-    return FALSE;               //signal handled, remove event source
-}
-
-gboolean channel_error_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
-{
-    printf( "GIOChannel reported error.\n" );
-    
-    return TRUE;       //signal not finally handled, pass it on
-}
-
-gboolean channel_hungup_handle( GIOChannel *sourcechannel, GIOCondition condition, gpointer data )
-{
-    printf( "GIOChannel was hung up.\n" );
-    
-    return TRUE;        //signal not finally handled, pass it on
-}
-
-//NOTE: the send and receive funtions in here only check if the messages were sent and received correctly.
-//          Whether the messages are empty or not is up to funtions such as evaluate_incoming())
-
-//receive incoming data
-//TODO: FINISH
-void receive_incoming( GIOChannel *channel, char *data )
-{
-    /*contents shall be similar to send_outgoing*/
-    char *str = NULL;
-    gsize length = NULL;
-    gsize terminator_pos = NULL;
     GIOStatus status;
     GError *error = NULL;
-    
-    //try reading until function returns something other than GIO_STATUS_AGAIN
-    while( (status = g_io_channel_read_line( channel, &str, &length, &terminator_pos, &error )) == G_IO_STATUS_AGAIN );
-    
-    //evaluate returned status
+
+    channel = g_io_channel_unix_new(fd);
+    if( !channel )
+    {
+    	//TODO use different error mechanism for this
+        fprintf( stderr, "Could not create GIOChannel.\n" );
+        return;
+    }
+    while( (status = g_io_channel_set_encoding( channel, NULL, &error )) == G_IO_STATUS_AGAIN )
+    {
+        fprintf( stderr, "Trying again to create GIOChannel.\n" );
+    }
     switch(status)
     {
         case G_IO_STATUS_ERROR:
         {
-            print_error( "Unable to read data: " ); //error message from the GError will probably come after here
-        }
-        case G_IO_STATUS_NORMAL:
-        {
+            //TODO handle this error
+            fprintf( stderr, "Cannot set encoding on GIOChannel.\n" );
             break;
-        }
-        case G_IO_STATUS_EOF:
-        {
-            print_error( "Reached end of file while sending data.\n" );
         }
         default:
         {
-            print_error("Encountered unknown return value of g_io_channel_write_chars().\n");
-        }
-    }
-    
-    //check error variable
-    if( error != NULL )
-    {
-        print_error( error->message );
-        print_error("\n");
-        g_error_free(error);
-    }
-    
-    evaluate_incoming(str);
-    
-    return;
-}
-
-//send outgoing data, data has to be nul-terminated
-void send_outgoing( GIOChannel *channel, char *data )
-{
-    int len = strlen(data);
-    int size = len+1;
-    gsize written_size = 0;
-    GIOStatus status;
-    GError *error = NULL;
-    
-    //try sending until a value different from G_IO_STATUS_AGAIN is returned
-    while( (status = g_io_channel_write_chars( channel, data, size, &written_size, &error )) == G_IO_STATUS_AGAIN );
-    
-    //evaluate return value
-    switch(status)
-    {
-        case G_IO_STATUS_ERROR:
-        {
-            print_error( "Unable to send data: " );//I'm assuming error will be set so its message will come after here
-        }
-        case G_IO_STATUS_NORMAL:
-        {
             break;
         }
-        case G_IO_STATUS_EOF:
-        {
-            print_error( "Reached end of file while sending data.\n" );
-        }
-        default:
-        {
-            print_error("Encountered unknown return value of g_io_channel_write_chars().\n");
-        }
     }
-    
-    //check if all characters were written
-    if(written_size != size)
+    if(error)
     {
-        print_error("Not all characters were sent.\n");
+        fprintf( stderr, "%s\n", error->message );
     }
-    
-    //check error variable
-    if( error != NULL )
-    {
-        print_error( error->message );
-        print_error("\n");
-        g_error_free(error);
-    }
+
+    printf( "(create_channel)Created a GIOChannel\n" );
+
     return;
 }
 
-int TCP_recv( socket_t *sock, char *data, int len, int flags )
-{	
-	int return_val;
-	return_val = recv( *sock, data, len, flags );
-	if( return_val == -1 )
+extern gboolean read_line_from_channel(char **line)
+{
+	/*read from the channel*/
+	GIOStatus status;
+	gsize length = NULL;	//the length of read data will go here
+	gsize line_terminator_pos = NULL;	//position of '\n' will go here (both gsizes will be NULL if no data read)
+	GError *error = NULL;
+	gboolean return_value = SUCCESS;
+
+	printf("(read_line_from_channel)will read line\n");
+
+	while( (status = g_io_channel_read_line( channel, line, &length, &line_terminator_pos, &error )) == G_IO_STATUS_AGAIN )
 	{
-		fprintf( stderr, "Error receiving data!: %s\n", strerror(errno) );
+		printf("Trying again.\n");
 	}
-	else if( return_val == 0 )
+	switch(status)
 	{
-		fprintf( stderr, "Looks like the other end is gone!: %s\n", strerror(errno) );
+		case G_IO_STATUS_ERROR:
+		{
+			fprintf( stderr, "Error reading from GIOChannel.\n" );
+			break;
+		}
+		case G_IO_STATUS_NORMAL:
+		{
+			printf( "(read_line_from_channel)Line was read: %s\n", *line );
+			break;
+		}
+		case G_IO_STATUS_EOF:
+		{
+			fprintf( stderr, "Reached end of file while reading from GIOChannel.\n" );
+			return_value = FAILURE;
+			break;
+		}
+		default:
+		{
+			fprintf( stderr, "Unknown return value\n" );
+			break;
+		}
+	}
+	if(error)
+	{
+		fprintf( stderr, "%s", error->message );
+		error = NULL;
 	}
 
-	return return_val;
+	/*replace line terminator with NULL*/
+	if(*line)
+	{
+		*( *line + line_terminator_pos ) = '\0';
+	}
+
+	return return_value;
 }
 
-void cleanup(void)
+/*username should not be given when sending commands*/
+extern void write_to_channel( const char *message, const char *username )
 {
-	printf("Done cleaning up\n");
+	/*write to the channel*/
+	GIOStatus status;
+	gchar *data = NULL;
+	gssize length;
+	gssize length_of_data;
+	gchar length_str[4];
+	gsize bytes_written;
+	GError *error = NULL;
+
+	/*calculate length of data that is to be sent TODO note somewhere that the word length always excludes \0*/
+	if(username)
+	{
+		length = strlen(username) + strlen(" ") + strlen(message);
+	}
+	else
+	{
+		length = strlen(message);
+	}
+
+	/*length of data has to be length plus the length of length_str, which is 4*/
+	length_of_data = length + 4;
+
+	/*convert count to string*/
+	for( int i = 3; i >= 0; i-- )
+	{
+		length_str[i] = 48 + length % 10;
+		length /= 10;
+	}
+
+	/*put the length as string (if needed the username and a space) and the message into data.*/
+	data = calloc( length_of_data + 1 , sizeof(char) );
+	if(username)
+	{
+		strncpy( data, length_str, 4 );
+		strncpy( data+4, username, strlen(username) + 1 );
+		strncat( data, " ", 1 );
+		strncat( data, message, strlen(message) );
+	}
+	else
+	{
+		strncpy( data, length_str, 4 );
+		strncpy( data+4, message, strlen(message) + 1 );
+	}
+
+	/*send the completed data*/
+	while( (status = g_io_channel_write_chars( channel, data, length_of_data, &bytes_written, &error )) == G_IO_STATUS_AGAIN );
+
+	switch(status)
+	{
+		case G_IO_STATUS_ERROR:
+		{
+			fprintf( stderr, "Error writing to stdout via a GIOChannel.\n" );
+			break;
+		}
+		case G_IO_STATUS_NORMAL:
+		{
+			printf( "(write_to_channel)Normal return value writing \"%s\" to channel.\n", data );
+			break;
+		}
+		case G_IO_STATUS_EOF:
+		{
+			fprintf( stderr, "Reached end of file while writing to stdout via a GIOChannel.\n" );
+			break;
+		}
+		default:
+		{
+			fprintf( stderr, "Unknown return value\n" );
+			break;
+		}
+	}
+	if( bytes_written < (gsize)length_of_data )
+	{
+		fprintf( stderr, "(write_to_channel)Not all bytes were written.\n" );
+	}
+	if(error)
+	{
+		fprintf( stderr, "%s", error->message );
+		error = NULL;
+	}
+
+	/*free data since it is no longer needed*/
+	g_free(data);
+
+	/*as a convenience, let it point at NULL now that it's freed*/
+	data = NULL;
+
+	/*flush the channel*/
+	while( (status = g_io_channel_flush( channel, &error )) == G_IO_STATUS_AGAIN );
+	switch(status)
+	{
+		case G_IO_STATUS_ERROR:
+		{
+			fprintf( stderr, "(write_to_channel)Error flushing stdout via a GIOChannel.\n" );
+			break;
+		}
+		case G_IO_STATUS_NORMAL:
+		{
+			break;
+		}
+		default:
+		{
+			fprintf( stderr, "Unknown return value\n" );
+			break;
+		}
+	}
+	if(error)
+	{
+		fprintf( stderr, "%s", error->message );
+		error = NULL;
+	}
+
 	return;
 }
 
-void close_socket( socket_t *sock )
+static void shutdown_channel(void)
 {
-	printf( "Trying to close socket %d\n", *sock );
-	if( close(*sock) < 0 )
+	GIOStatus status;
+	gboolean flush = FALSE;
+	GError *error = NULL;
+
+	while( (status = g_io_channel_shutdown( channel, flush, &error )) == G_IO_STATUS_AGAIN );
+	printf( "channel->ref_count after shutdown = %i\n", channel->ref_count );
+	switch(status)
 	{
-		fprintf( stderr, "Error closing socket!: %s\n", strerror(errno) );
+		case G_IO_STATUS_NORMAL:
+		{
+			printf( "Shutdown of GIOChannel successful.\n" );
+			break;
+		}
+		case G_IO_STATUS_EOF:
+		{
+			print_error("Reached end of file while shutting down the GIOChannel");
+			break;
+		}
+		case G_IO_STATUS_ERROR:
+		{
+			print_error("Error shutting down the GIOChannel");
+			break;
+		}
+		default:
+		{
+			print_error("Unknown status of g_io_channel_shutdown");
+			break;
+		}
+	}
+
+	if(error)
+	{
+		print_error(error->message);
+		g_error_free(error);
+	}
+
+	return;
+}
+
+static gboolean channel_in_handle( GIOChannel *source, GIOCondition condition, gpointer eval_func )
+{
+	int read_status;
+	char *buffer = NULL;
+	void (*evaluate)(const char *) = eval_func;
+
+	switch(condition)
+	{
+		case G_IO_IN:
+		{
+			read_status = read_line_from_channel(&buffer);
+			break;
+		}
+		default:
+		{
+			printf("Unknown GIOCondition %d.\n", condition);	//TODO use error function
+			break;
+		}
+	}
+
+	if( read_status == SUCCESS )
+	{
+		evaluate( (const char *)buffer );
+		g_free(buffer);
+		return G_SOURCE_CONTINUE;
+	}
+	else
+	{
+		g_free(buffer);
+		connected = FALSE;
+		return G_SOURCE_REMOVE;
 	}
 }
 
-void print_error( char *message )
+extern gboolean watch_connection(gpointer eval_func)
 {
-    fprintf( stderr, "ERROR: %s", message );
-    return;
+	if(!connected)  //if not connected, has to be connected
+	{
+		if(channel)
+		{
+			shutdown_channel();
+			g_io_channel_unref(channel);
+			channel = NULL;
+		}
+
+		/*this will only be done if connection is lost and channel is NULL*/
+		int sock = create_socket();
+		if( sock > 0 )
+		{
+			connected = connect_socket( &sock, "localhost", 1234 );
+			if(connected)
+			{
+				create_channel(sock);
+				g_io_add_watch( channel, G_IO_IN, channel_in_handle, eval_func );
+			}
+			else
+			{
+				close_socket(&sock);
+			}
+		}
+	}
+
+	return G_SOURCE_CONTINUE;   //this callback should not be removed
 }
