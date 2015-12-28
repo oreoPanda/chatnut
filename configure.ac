@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 AC_INIT([chatnut], [0.9], [legojonas@gmx.de])
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])	#automake version?
 
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
