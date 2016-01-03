@@ -107,6 +107,7 @@ extern void append_to_history_view( const char *buffer, const char *sender )
 	GtkTextBuffer *historybuffer = NULL;
 	GtkTextIter start;
 	GtkTextIter end;
+        GtkTextMark *mark;
 
 	char *history = NULL;
 	unsigned int char_count;
@@ -147,6 +148,12 @@ extern void append_to_history_view( const char *buffer, const char *sender )
 	}
 	gtk_text_buffer_get_end_iter( historybuffer, &end );
 	gtk_text_buffer_insert( historybuffer, &end, to_append, -1 );
+        
+        /*scroll down*/
+        gtk_text_buffer_get_end_iter( historybuffer, &end );
+        mark = gtk_text_mark_new( NULL, FALSE );
+        gtk_text_buffer_add_mark( historybuffer, mark, &end );
+        gtk_text_view_scroll_to_mark( GTK_TEXT_VIEW(history_view), mark, 0, FALSE, 1.0, 1.0 );
 
 	return;
 }
