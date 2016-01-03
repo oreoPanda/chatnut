@@ -346,51 +346,43 @@ static void contact_selected_finish()
 	return;
 }
 
+static gboolean switch_to(void)
+{
+    chdir(getenv("HOME"));
+    mkdir( ".chatnut", 0755 );
+    chdir(".chatnut");
+    mkdir( user, 0755 );
+    chdir(user);
+}
+
 static void add_contact_finish()
 {
-	FILE *contactfile = NULL;
-	char *path = NULL;
-	char *filename = "contactlist";	//is this on heap or stack? no malloc(), so no free() or?
+    FILE *contactfile = NULL;
+    char *filename = "contactlist";	//is this on heap or stack? no malloc(), so no free() or?
 
-	char *contact = calloc( strlen(pending_action_data.name) + 1, sizeof(char) );
-	strncpy( contact, pending_action_data.name, strlen(pending_action_data.name) + 1 );
-	free(pending_action_data.name);
-	pending_action_data.name = NULL;
+    char *contact = calloc( strlen(pending_action_data.name) + 1, sizeof(char) );
+    strncpy( contact, pending_action_data.name, strlen(pending_action_data.name) + 1 );
+    free(pending_action_data.name);
+    pending_action_data.name = NULL;
 
-	/*generate path to contactlist ( $HOME/.chatnut/[username]/contactlist )*/
-	path = calloc( strlen(getenv("HOME")) + 1
-				+ strlen(".chatnut")
-				+ strlen(user) + 1,
-				sizeof(char) );
-	strncpy( path, getenv("HOME"), strlen(getenv("HOME")) + 1 );	//need to evaluate return value? (not copied on heap like realloc()...)
-	strncat( path, "/", 1 );
-	strncat( path, ".chatnut", strlen(".chatnut") );
-	strncat( path, "/", 1 );
-	strncat( path, user, strlen(user) );
+    /*switch to the logged in users chatnut directory and append to contactlist*/
+    switch_to();
 
-	/*switch to directory*/
-	if( chdir(path) != 0 )
-	{
-		mkdir( path, 0755 );
-		chdir(path);			//TODO error?
-	}
-	free(path);
+    /*open file and write to it*/
+    contactfile = fopen( filename, "a" );		//NULL check if file not found (errno)
+    if(contactfile)
+    {
+        fprintf( contactfile, "%s\n", contact );
+        fclose(contactfile);
+    }
+    else
+    {
+        perror("(add_contact_finish)");		//TODO log an error
+    }
 
-	/*open file and write to it*/
-	contactfile = fopen( filename, "a" );		//NULL check if file not found (errno)
-	if(contactfile)
-	{
-		fprintf( contactfile, "%s\n", contact );
-		fclose(contactfile);
-	}
-	else
-	{
-		perror("(add_contact_finish)");		//TODO log an error
-	}
+    free(contact);
 
-	free(contact);
-
-	return;
+    return;
 }
 
 //TODO this is static, but called from other file. This may work cuz it is opened thru pointer passed from this file
