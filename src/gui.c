@@ -198,6 +198,13 @@ extern void enable_input_view( gboolean (*key_pressed_cb)( GtkWidget *, GdkEvent
 	return;
 }
 
+extern void clear_input_view(void)
+{
+    gtk_text_buffer_set_text( gtk_text_view_get_buffer(GTK_TEXT_VIEW(input_view)), "", 0 );
+    
+    return;
+}
+
 extern void create_right_grid(void)
 {
     rgrid = gtk_grid_new();
