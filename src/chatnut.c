@@ -132,12 +132,12 @@ void load_history( const char *contact, char **to )
     FILE *history_file = NULL;
     int file_len = 0;
     const char *filename = contact;
-    char *path = "history";
+    const char *path = "history";
 
     /*switch to directory*/
     if( chdir(path) != 0 )
     {
-        fprintf( stderr, "Unable to switch into user's history directory in $HOME/.chatnut/[user]", strerror(errno) );
+        fprintf( stderr, "Unable to switch into user's history directory in $HOME/.chatnut/[user]: %s\n", strerror(errno) );
         return;
     }
 
@@ -156,7 +156,7 @@ void load_history( const char *contact, char **to )
     else
     {
         *to = NULL;		//set the history storage buffer to NULL
-        //TODO log error or simply no history there yet...
+        fprintf( stderr, "Unable to open user's chat history for contact in $HOME/.chatnut/[user]/history: %s\n", strerror(errno) );
     }
     
     /*switch back to parent directory*/
@@ -168,33 +168,18 @@ void load_history( const char *contact, char **to )
 void append_to_history( const char *message, const char *username )
 {
     FILE *historyfile = NULL;
-    char *historypath = NULL;
-    const char *historyfilename = username;
-
-    /*generate path to historyfile*/
-    historypath = calloc( strlen(getenv("HOME")) + 1
-                                            + strlen(".chatnut") + 1
-                                            + strlen(user) + 1
-                                            + strlen("history") + 1,
-                                            sizeof(char) );
-    strncpy( historypath, getenv("HOME"), strlen(getenv("HOME"))+1 );
-    strncat( historypath, "/", 1 );
-    strncat( historypath, ".chatnut", strlen(".chatnut") );
-    strncat( historypath, "/", 1 );
-    strncat( historypath, user, strlen(user) );
-    strncat( historypath, "/", 1 );
-    strncat( historypath, "history", strlen("history") );
-
+    const char *filename = username;
+    const char *path = "history";
+    
     /*switch to directory*/
-    if( chdir(historypath) != 0 )
+    if( chdir(path) != 0 )
     {
-        mkdir( historypath, 0755 );
-        chdir(historypath);			//TODO error?
+        fprintf( stderr, "Unable to switch into user's history directory in $HOME/.chatnut/[user]: %s\n", strerror(errno) );
+        return;
     }
-    free(historypath);
 
     /*open file and write to it*/
-    historyfile = fopen( historyfilename, "a" );		//NULL check if file not found (errno)
+    historyfile = fopen( filename, "a" );		//NULL check if file not found (errno)
     if(historyfile)
     {
         fprintf( historyfile, "%s\n", message );
@@ -202,8 +187,11 @@ void append_to_history( const char *message, const char *username )
     }
     else
     {
-        //TODO log error
+        fprintf( stderr, "Unable to open user's chat history for contact in $HOME/.chatnut/[user]/history: %s\n", strerror(errno) );
     }
+    
+    /*switch back to parent directory*/
+    chdir("../");
 
     return;
 }
@@ -216,6 +204,11 @@ gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event, gpoin
     GtkTextIter start;
     GtkTextIter end;
     gchar *text = NULL;
+    
+    if( data != NULL )
+    {
+        fprintf( stderr, "(input_view_key_pressed_cb): gpointer data is non-NULL but not used.\n" );
+    }
 
     gdk_event_get_state( event, &state );
     gdk_event_get_keyval( event, &keyval );		//keyvals from <gdk/gdkkeysyms.h>
@@ -246,15 +239,47 @@ gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event, gpoin
             append_to_history( text, currentbuddy );
             append_to_history_view( text, user );
 
-            /*clear inputview*/
-            clear_input_view();
-
             /*free text, since it is a non-const string returned from a gtk function*/
             g_free(text);
         }
     }
 
-    return FALSE;
+    return FALSE;    //FALSE means event needs further handling, if TRUE then the typed letter would not appear in input_view
+}
+
+gboolean input_view_key_released_cb( GtkWidget *inputview, GdkEvent *event, gpointer data )
+{
+    GdkModifierType state;
+    guint keyval;
+    
+    if( inputview && event && !data )
+    {
+    
+        gdk_event_get_state( event, &state );
+        gdk_event_get_keyval( event, &keyval );		//keyvals from <gdk/gdkkeysyms.h>
+
+        switch(state)
+        {
+            case GDK_SHIFT_MASK:
+            {
+                return FALSE;
+            }
+            default:
+            {
+                break;
+            }
+        }
+        switch(keyval)
+        {
+            case GDK_KEY_Return:
+            {
+                /*clear inputview*/
+                clear_input_view();
+            }
+        }
+    }
+    
+    return TRUE;    //event will not be handled further, let's see what happens :D
 }
 
 //TODO error when /who fails
@@ -265,6 +290,19 @@ static void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
     GtkTreeModel *model;
     char *contact_name;
     char *history;
+    
+    if( data != NULL )
+    {
+        fprintf( stderr, "(contact_selection_handler): GtkTreeViewColumn column is non-NULL but not used.\n" );
+    }
+    if( column )
+    {
+        fprintf( stdout, "(contact_selection_handler): GtkTreeViewColumn column is non-NULL but not used.\n" );
+    }
+    if( treepath )
+    {
+        fprintf( stdout, "(contact_selection_handler): GtkTreePath treepath is non-NULL but not used.\n" );
+    }
 
     selection = gtk_tree_view_get_selection(treeview);
 
@@ -293,7 +331,8 @@ static void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
             strncat( command, contact_name, strlen(contact_name) );
             write_to_channel( command, NULL );
 
-            enable_input_view(input_view_key_pressed_cb);
+            //TODO move to contact_selected_finish()
+            enable_input_view(input_view_key_pressed_cb, input_view_key_released_cb);
 
             //TODO g_free() or free(), difference??
             free(command);
@@ -331,8 +370,11 @@ int init_chatnut_directory(void)
     }
     if( mkdir( ".chatnut", 0755 ) != 0 )
     {
-        fprintf( stderr, "Error creating directory .chatnut in your home directory: %s\n", strerror(errno) );
-        return 1;
+        if( errno != EEXIST )
+        {
+            fprintf( stderr, "Error creating directory .chatnut in your home directory: %s\n", strerror(errno) );
+            return 1;
+        }
     }
     if( chdir(".chatnut") != 0 )
     {
@@ -347,8 +389,11 @@ int init_user_directory(void)
     /*directories*/
     if( mkdir( user, 0755 ) != 0 )
     {
-        fprintf( stderr, "Error creating users directory in $HOME/.chatnut: %s\n", strerror(errno) );
-        return 1;
+        if( errno != EEXIST )
+        {
+            fprintf( stderr, "Error creating users directory in $HOME/.chatnut: %s\n", strerror(errno) );
+            return 1;
+        }
     }
     if( chdir(user) != 0 )
     {
@@ -357,8 +402,11 @@ int init_user_directory(void)
     }
     if( mkdir( "history", 0755 ) != 0 )
     {
-        fprintf( stderr, "Error creating history directory for user in $HOME/.chatnut/[user]: %s\n", strerror(errno) );
-        return 1;
+        if( errno != EEXIST )
+        {
+            fprintf( stderr, "Error creating history directory for user in $HOME/.chatnut/[user]: %s\n", strerror(errno) );
+            return 1;
+        }
     }
     
     return 0;
@@ -394,56 +442,61 @@ static void add_contact_finish()
 //TODO this is static, but called from other file. This may work cuz it is opened thru pointer passed from this file
 static gboolean add_contact_response_handle( GtkDialog *dialog, gint response_id, gpointer data )
 {
-	switch(response_id)
-	{
-		case GTK_RESPONSE_OK:
-		{
-			int commandlen = 0;
-			char *command = NULL;
-			GtkEntryBuffer *buffer = NULL;
+    switch(response_id)
+    {
+        case GTK_RESPONSE_OK:
+        {
+            int commandlen = 0;
+            char *command = NULL;
+            GtkEntryBuffer *buffer = NULL;
 
-			/*read contact name*/
-			buffer = data;
-			const gchar *contact = gtk_entry_buffer_get_text(buffer);
+            /*read contact name*/
+            buffer = data;
+            const gchar *contact = gtk_entry_buffer_get_text(buffer);
 
-			pending_action_data.name = (char *)contact;
+            pending_action_data.name = (char *)contact;
 
-			/*ask server if the given contact exists*/
-			commandlen = strlen("/lookup ") + strlen(contact) + 1;	//strlen + space for NULL
-			command = calloc( commandlen, sizeof(char) );
-			strncpy( command, "/lookup ", 9 );	//"/who " + NULL
-			strncat( command, contact, strlen(contact) );
-			//TODO check is over-engineering or? actually no, since server may leave before user clicks "Add Contact" button
-			if( channel_not_null() && login_status == TRUE )
-			{
-				write_to_channel( command, NULL );
-			}
-			free(command);
+            /*ask server if the given contact exists*/
+            commandlen = strlen("/lookup ") + strlen(contact) + 1;	//strlen + space for NULL
+            command = calloc( commandlen, sizeof(char) );
+            strncpy( command, "/lookup ", 9 );	//"/who " + NULL
+            strncat( command, contact, strlen(contact) );
+            //TODO check is over-engineering or? actually no, since server may leave before user clicks "Add Contact" button
+            if( channel_not_null() && login_status == TRUE )
+            {
+                write_to_channel( command, NULL );
+            }
+            free(command);
 
-			gtk_widget_destroy(GTK_WIDGET(dialog));
+            gtk_widget_destroy(GTK_WIDGET(dialog));
 
-			break;
-		}
-		case GTK_RESPONSE_CANCEL:
-		{
-			gtk_widget_destroy(GTK_WIDGET(dialog));
+            break;
+        }
+        case GTK_RESPONSE_CANCEL:
+        {
+            gtk_widget_destroy(GTK_WIDGET(dialog));
 
-			break;
-		}
-		default:
-		{
-			//TODO use a different error report for this, print_error is for connection_raw.c and should not be in connection_raw.h
-			print_error("Unhandled response id for GtkDialog");
+            break;
+        }
+        default:
+        {
+            //TODO use a different error report for this, print_error is for connection_raw.c and should not be in connection_raw.h
+            print_error("Unhandled response id for GtkDialog");
 
-			break;
-		}
-	}
-	return G_SOURCE_REMOVE;
+            break;
+        }
+    }
+    return G_SOURCE_REMOVE;
 }
 
 //TODO same as above
 static gboolean add_contact_button_clicked( GtkButton *button, gpointer data )
 {
+    if( data )
+    {
+        fprintf( stdout, "(add_contact_button_clicked): gpointer data is non-NULL but not used.\n" );
+    }
+    
     if(button)
     {
         printf("Adding contact...\n");
@@ -473,7 +526,7 @@ static void login_finish(void)
     return;
 }
 
-/*TODO would make more sense if login isn't possible if not connected*/
+/*TODO would make more sense if login isn't possible if not connected, TODO handle different response ids*/
 static gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
 {
     int commandlen = 0;
@@ -481,39 +534,51 @@ static gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
     GtkEntryBuffer **bufferlist = data;
     GtkEntryBuffer *usernamebuffer = *bufferlist;
     GtkEntryBuffer *passwordbuffer = *(bufferlist+1);
-
-    /*get username and password, const, so should not be free()ds*/
-    const char *username = gtk_entry_buffer_get_text(usernamebuffer);
-    const char *password = gtk_entry_buffer_get_text(passwordbuffer);
-
-    /*create and send login command to server*/
-    commandlen = strlen("/login ")
-                                    + strlen(username)
-                                    + 1			//space
-                                    + strlen(password)
-                                    + 1;		//NULL
-    command = calloc( commandlen, sizeof(char) );
-    strncpy( command, "/login ", 8 );	//"/login " + NULL
-    strncat( command, username, strlen(username) );
-    strncat( command, " ", 1 );
-    strncat( command, password, strlen(password) );
-
-    //TODO test what happens here when server leaves while user types in username and password
-            //thought: server leaves, this command is written, G_IO_CHANNEL_HUNGUP gets emitted but not handled
-                    //next thing that happens is a read with 0 (EOF), and client should work normally
-    //TODO for over-engineering, see function above
-    if( channel_not_null() )
+    
+    if( data != NULL )
     {
-        write_to_channel( command, NULL );
+        fprintf( stderr, "(login): gpointer data is non-NULL but not used.\n" );
     }
 
-    //copy username for later use, don't free username or passwords
-    pending_action_data.name = calloc( strlen(username) + 1, sizeof(char) );
-    strncpy( pending_action_data.name, username, strlen(username)+1 );
+    if( response_id == GTK_RESPONSE_OK )
+    {    
+        /*get username and password, const, so should not be free()ds*/
+        const char *username = gtk_entry_buffer_get_text(usernamebuffer);
+        const char *password = gtk_entry_buffer_get_text(passwordbuffer);
 
-    free(command);
+        /*create and send login command to server*/
+        commandlen = strlen("/login ")
+                                + strlen(username)
+                                + 1			//space
+                                + strlen(password)
+                                + 1;		//NULL
+        command = calloc( commandlen, sizeof(char) );
+        strncpy( command, "/login ", 8 );	//"/login " + NULL
+        strncat( command, username, strlen(username) );
+        strncat( command, " ", 1 );
+        strncat( command, password, strlen(password) );
 
-    gtk_widget_destroy(GTK_WIDGET(dialog));
+        //TODO test what happens here when server leaves while user types in username and password
+                //thought: server leaves, this command is written, G_IO_CHANNEL_HUNGUP gets emitted but not handled
+                        //next thing that happens is a read with 0 (EOF), and client should work normally
+        //TODO for over-engineering, see function above
+        if( channel_not_null() )
+        {
+            write_to_channel( command, NULL );
+        }
+
+        //copy username for later use, don't free username or passwords
+        pending_action_data.name = calloc( strlen(username) + 1, sizeof(char) );
+        strncpy( pending_action_data.name, username, strlen(username)+1 );
+
+        free(command);
+
+        gtk_widget_destroy(GTK_WIDGET(dialog));
+    }
+    else
+    {
+        fprintf( stdout, "Warning, The login dialog sent response_id not equal to GTK_RESPONSE_OK\n" );
+    }
 
     return G_SOURCE_REMOVE;
 }
