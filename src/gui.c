@@ -1,6 +1,7 @@
 /*gui.c*/
 
 #include "gui.h"
+#include "gui_interaction.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -326,33 +327,86 @@ extern void populate_window(void)
 
 extern void populate_window_with_list_or_label(void)
 {
-        if(list)
-        {
-                gtk_grid_attach( GTK_GRID(rgrid), list, 0, 1, 3, 1 );
-        }
-        else
-        {
-                gtk_grid_attach( GTK_GRID(rgrid), label, 0, 1, 3, 1 );
-        }
+    if(list)
+    {
+        gtk_grid_attach( GTK_GRID(rgrid), list, 0, 1, 3, 1 );
+    }
+    else
+    {
+        gtk_grid_attach( GTK_GRID(rgrid), label, 0, 1, 3, 1 );
+    }
+    
+    return;
 }
 
-extern void functionalize_window( gboolean (*add_contact_callback_func)( GtkButton *, gpointer ) )
+/*TODO this call can be put into the function for the button...*/
+extern void enable_add_contact_button(void)
 {
-        g_signal_connect( button_add_contact, "clicked", G_CALLBACK(add_contact_callback_func), NULL );
-        //g_signal_connect( input_view, "backspace", G_CALLBACK(backspace_handler), NULL );
-        //g_signal_connect( input_view, "key-press-event", G_CALLBACK(key_pressed), history_view );
-        //g_signal_connect( G_OBJECT(selection), "changed", G_CALLBACK(contact_selection_handler), history_view );
+    g_signal_connect( button_add_contact, "clicked", G_CALLBACK(popup_add_contact), NULL );
 
-        return;
+    return;
+}
+
+extern gboolean popup_login(gpointer data)
+{
+    GtkWidget *dialog_content_area = NULL,
+                *username_entry_field = NULL,
+                *password_entry_field = NULL;
+    GtkEntryBuffer *username_buffer = NULL,
+                    *password_buffer = NULL,
+                    **bufferlist = NULL;
+
+    if( data )
+    {
+        fprintf( stderr, "Data passed to the login popup will not be used.\n" );
+    }
+    
+    /*dialog*/
+    dialog_login = gtk_dialog_new();
+    dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_login));
+    gtk_widget_show(dialog_login);
+
+    /*username entry*/
+    username_entry_field = gtk_entry_new();
+    username_buffer = gtk_entry_buffer_new( NULL, 0 );
+    gtk_entry_set_buffer( GTK_ENTRY(username_entry_field), GTK_ENTRY_BUFFER(username_buffer) );
+    gtk_widget_show(username_entry_field);
+
+    /*password entry*/
+    password_entry_field = gtk_entry_new();
+    password_buffer = gtk_entry_buffer_new( NULL, 0 );
+    gtk_entry_set_buffer( GTK_ENTRY(password_entry_field), GTK_ENTRY_BUFFER(password_buffer) );
+    gtk_widget_show(password_entry_field);
+
+    /*pack*/
+    gtk_box_pack_start( GTK_BOX(dialog_content_area), username_entry_field, FALSE, FALSE, 0 );
+    gtk_box_pack_start( GTK_BOX(dialog_content_area), password_entry_field, FALSE, FALSE, 0 );
+    gtk_dialog_add_button( GTK_DIALOG(dialog_login),  "OK/Login", GTK_RESPONSE_OK );
+
+    bufferlist = calloc( 2, sizeof(GtkEntryBuffer *) );
+    *bufferlist = username_buffer;
+    *(bufferlist+1) = password_buffer;
+
+    /*connect the "response" signal*/
+    g_signal_connect( GTK_DIALOG(dialog_login), "response", G_CALLBACK(login), NULL );
+
+    return G_SOURCE_REMOVE;
 }
 
 //TODO do I need to free() or g_free() (?) dialog_content_area, field_buffer and so on?
-extern void popup_add_contact( gboolean (*response_handle)( GtkDialog *, gint, gpointer ) )
+extern gboolean popup_add_contact( GtkButton *button, gpointer data )
 {
-        GtkWidget *dialog_content_area = NULL,
-                        *contact_entry_field = NULL;
-        GtkEntryBuffer *field_buffer = NULL;
+    GtkWidget *dialog_content_area = NULL,
+                *contact_entry_field = NULL;
+    GtkEntryBuffer *field_buffer = NULL;
+    
+    if( data )
+    {
+        fprintf( stderr, "Data passed to the add contact popup will not be used.\n" );
+    }
 
+    if( button )
+    {
         /*dialog*/
         dialog_add_contact = gtk_dialog_new();
         dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_add_contact));
@@ -368,53 +422,13 @@ extern void popup_add_contact( gboolean (*response_handle)( GtkDialog *, gint, g
         gtk_dialog_add_button( GTK_DIALOG(dialog_add_contact), "Cancel", GTK_RESPONSE_CANCEL );
 
         /*connect the "response" signal*/
-        g_signal_connect( GTK_DIALOG(dialog_add_contact), "response", G_CALLBACK(response_handle), field_buffer );
+        g_signal_connect( GTK_DIALOG(dialog_add_contact), "response", G_CALLBACK(add_contact), field_buffer );
 
         /*I forgot it again... show the widgets*/
         gtk_widget_show(dialog_add_contact);
         gtk_widget_show(contact_entry_field);
+    }
 
-        return;
-}
-
-extern gboolean popup_login(gpointer login_func)
-{
-        GtkWidget *dialog_content_area = NULL,
-                        *username_entry_field = NULL,
-                        *password_entry_field = NULL;
-        GtkEntryBuffer *username_buffer = NULL,
-                        *password_buffer = NULL,
-                        **bufferlist = NULL;
-        gboolean (*login)( GtkDialog *, gint, gpointer ) = login_func;
-
-        /*dialog*/
-        dialog_login = gtk_dialog_new();
-        dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_login));
-        gtk_widget_show(dialog_login);
-
-        /*username entry*/
-        username_entry_field = gtk_entry_new();
-        username_buffer = gtk_entry_buffer_new( NULL, 0 );
-        gtk_entry_set_buffer( GTK_ENTRY(username_entry_field), GTK_ENTRY_BUFFER(username_buffer) );
-        gtk_widget_show(username_entry_field);
-
-        /*password entry*/
-        password_entry_field = gtk_entry_new();
-        password_buffer = gtk_entry_buffer_new( NULL, 0 );
-        gtk_entry_set_buffer( GTK_ENTRY(password_entry_field), GTK_ENTRY_BUFFER(password_buffer) );
-        gtk_widget_show(password_entry_field);
-
-        /*pack*/
-        gtk_box_pack_start( GTK_BOX(dialog_content_area), username_entry_field, FALSE, FALSE, 0 );
-        gtk_box_pack_start( GTK_BOX(dialog_content_area), password_entry_field, FALSE, FALSE, 0 );
-        gtk_dialog_add_button( GTK_DIALOG(dialog_login),  "OK/Login", GTK_RESPONSE_OK );
-
-        bufferlist = calloc( 2, sizeof(GtkEntryBuffer *) );
-        *bufferlist = username_buffer;
-        *(bufferlist+1) = password_buffer;
-
-        /*connect the "response" signal*/
-        g_signal_connect( GTK_DIALOG(dialog_login), "response", G_CALLBACK(login), bufferlist );
-
-        return G_SOURCE_REMOVE;
+    //TODO return value doesn't seem to matter?
+    return G_SOURCE_REMOVE;
 }
