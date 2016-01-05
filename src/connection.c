@@ -271,65 +271,73 @@ static void shutdown_channel(void)
 
 static gboolean channel_in_handle( GIOChannel *source, GIOCondition condition, gpointer eval_func )
 {
-	int read_status;
-	char *buffer = NULL;
-	void (*evaluate)(const char *) = eval_func;
+    int read_status = FAILURE;
+    char *buffer = NULL;
+    void (*evaluate)(const char *) = eval_func;
 
-	switch(condition)
-	{
-		case G_IO_IN:
-		{
-			read_status = read_line_from_channel(&buffer);
-			break;
-		}
-		default:
-		{
-			printf("Unknown GIOCondition %d.\n", condition);	//TODO use error function
-			break;
-		}
-	}
+    if( source == channel )
+    {
+        switch(condition)
+        {
+            case G_IO_IN:
+            {
+                read_status = read_line_from_channel(&buffer);  //returns FAILURE when EOF
+                break;
+            }
+            default:
+            {
+                printf("Unknown GIOCondition %d.\n", condition);	//TODO use error function
+                break;
+            }
+        }
 
-	if( read_status == SUCCESS )
-	{
-		evaluate( (const char *)buffer );
-		g_free(buffer);
-		return G_SOURCE_CONTINUE;
-	}
-	else
-	{
-		g_free(buffer);
-		connected = FALSE;
-		return G_SOURCE_REMOVE;
-	}
+        if( read_status == SUCCESS )
+        {
+            evaluate( (const char *)buffer );
+            g_free(buffer);
+            return G_SOURCE_CONTINUE;
+        }
+        else
+        {
+            g_free(buffer);
+            connected = FALSE;
+            return G_SOURCE_REMOVE;
+        }
+    }
+    else
+    {
+        fprintf( stderr, "(channel_in_handle) Warning The passed channel doesn't match the global channel." );
+        return G_SOURCE_REMOVE;
+    }
 }
 
 extern gboolean watch_connection(gpointer eval_func)
 {
-	if(!connected)  //if not connected, has to be connected
-	{
-		if(channel)
-		{
-			shutdown_channel();
-			g_io_channel_unref(channel);
-			channel = NULL;
-		}
+    if(!connected)  //if not connected, has to be connected
+    {
+        if(channel)
+        {
+            shutdown_channel();
+            g_io_channel_unref(channel);
+            channel = NULL;
+        }
 
-		/*this will only be done if connection is lost and channel is NULL*/
-		int sock = create_socket();
-		if( sock > 0 )
-		{
-			connected = connect_socket( &sock, "84.46.23.14", 1234 );
-			if(connected)
-			{
-				create_channel(sock);
-				g_io_add_watch( channel, G_IO_IN, channel_in_handle, eval_func );
-			}
-			else
-			{
-				close_socket(&sock);
-			}
-		}
-	}
+        /*this will only be done if connection is lost and channel is NULL*/
+        int sock = create_socket();
+        if( sock > 0 )
+        {
+            connected = connect_socket( &sock, "192.168.178.59", 1234 );
+            if(connected)
+            {
+                create_channel(sock);
+                g_io_add_watch( channel, G_IO_IN, channel_in_handle, eval_func );
+            }
+            else
+            {
+                close_socket(&sock);
+            }
+        }
+    }
 
-	return G_SOURCE_CONTINUE;   //this callback should not be removed
+    return G_SOURCE_CONTINUE;   //this callback should not be removed
 }
