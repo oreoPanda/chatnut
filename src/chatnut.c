@@ -716,7 +716,7 @@ static void evaluate_incoming(const char *data)
 int main( int argc, char *argv[] )
 {
     gtk_init( &argc, &argv );
-    g_timeout_add_seconds( 1, watch_connection, evaluate_incoming );
+    g_idle_add( watch_connection, evaluate_incoming );
     if( init_chatnut_directory() != 0 )
     {
         fprintf( stderr, "Error initializing directory .chatnut in $HOME. Make sure this process is allowed to create directories in $HOME.\n" );
