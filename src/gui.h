@@ -26,9 +26,9 @@ extern void create_buttons(void);
 
 extern void populate_window(void);
 extern void populate_window_with_list_or_label(void);
-extern void functionalize_window( gboolean (*add_contact_callback_func)( GtkButton *, gpointer ) );
+extern void enable_add_contact_button(void);
 
-extern void popup_add_contact( gboolean (*response_handle)( GtkDialog *, gint, gpointer ) );
-extern gboolean popup_login(gpointer login_func);
+extern gboolean popup_login(gpointer data);
+extern gboolean popup_add_contact( GtkButton *button, gpointer data );
 
 #endif /* GUI_H_ */
