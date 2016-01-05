@@ -80,7 +80,7 @@ extern void close_socket( socket_t *sock )
 
 extern void print_error( char *message )
 {
-    fprintf( stderr, "ERROR: %s.\n", message );
+    fprintf( stderr, "ERROR: %s: %s\n", message, strerror(errno) );
 
     return;
 }
