@@ -155,7 +155,7 @@ static void evaluate_incoming(const char *data)
             /*get username string*/
             char *username = NULL;
             strip_username( message, &username );//return value (which should net be free()d) ignored, username should be free()d
-            handle_lookup_success(username);
+            handle_lookup_success( username );
             free(username);
             
             break;
