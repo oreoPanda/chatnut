@@ -15,7 +15,7 @@ extern char *get_username(void)
 }
 
 /*set username by copying name*/
-extern void set_username(char *name)
+extern void set_username(const char *name)
 {
     username = calloc( strlen(name)+1, sizeof(char) );
     strncpy( username, name, strlen(name)+1 );
