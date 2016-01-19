@@ -230,9 +230,8 @@ extern void create_right_grid(void)
 
 extern void create_list_view(GtkListStore *store)
 {
-        GtkTreeViewColumn *column = NULL;
+    GtkTreeViewColumn *column = NULL;
     GtkCellRenderer *renderer = NULL;
-        GtkTreeSelection *selection = NULL;
 
     //graphical, create a GtkTreeView
     list = gtk_tree_view_new_with_model( GTK_TREE_MODEL(store) );
@@ -246,17 +245,6 @@ extern void create_list_view(GtkListStore *store)
     column = gtk_tree_view_column_new_with_attributes( "Name", renderer, "text", 0, NULL );//"text" is an attribute (property) of a GtkCellRendererText
     gtk_tree_view_append_column( GTK_TREE_VIEW(list), column );
 
-    //online column
-    renderer = gtk_cell_renderer_toggle_new();
-    gtk_cell_renderer_toggle_set_radio( GTK_CELL_RENDERER_TOGGLE(renderer), TRUE );
-    gtk_cell_renderer_toggle_set_activatable( GTK_CELL_RENDERER_TOGGLE(renderer), TRUE );
-    column = gtk_tree_view_column_new_with_attributes( "Online", renderer, "active", 1, NULL );//"active" is an attribute (property) of a GtkCellRendererToggle, this function takes all values out of that column in the GtkListStore and puts them into cells and renders them.
-    gtk_tree_view_append_column( GTK_TREE_VIEW(list), column );
-
-    //selection handle, TODO this should be doubleclick mouseclick handle later...
-    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(list));	//not the actual selection, just an object that will be associated with the "changed" event/signal
-    gtk_tree_selection_set_mode( selection, GTK_SELECTION_SINGLE );
-
     gtk_widget_show(list);
 
     return;
@@ -264,9 +252,21 @@ extern void create_list_view(GtkListStore *store)
 
 extern void functionalize_list_view( void (*contact_selected_func)( GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, gpointer ) )
 {
-        g_signal_connect( list, "row-activated", G_CALLBACK(contact_selected_func), NULL );
+    g_signal_connect( list, "row-activated", G_CALLBACK(contact_selected_func), NULL );
 
-        return;
+    return;
+}
+
+extern void add_contact_to_list_view(const char *contact)
+{
+    GtkListStore *store = NULL;
+    GtkTreeIter iter;
+    
+    store = GTK_LIST_STORE( gtk_tree_view_get_model(GTK_TREE_VIEW(list)) );
+    gtk_list_store_append( store, &iter );
+    gtk_list_store_set( store, &iter, 0, contact, -1 );
+    
+    return;
 }
 
 extern void create_label(const gchar *message)
