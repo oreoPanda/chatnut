@@ -2,6 +2,7 @@
 
 #include "user.h"
 #include "file_operations.h"
+#include "gui.h"
 #include <string.h>
 #include <errno.h>
 
@@ -12,22 +13,10 @@ extern void handle_buddy_is_set(char *username)
     return;
 }
 
-extern void handle_lookup_success(char *contact)
+extern void handle_lookup_success(const char *contact)
 {
-    FILE *contactfile = NULL;
-    char *filename = "contactlist";	//is this on heap or stack? no malloc(), so no free() or?
-
-    /*open file and write to it*/
-    contactfile = fopen( filename, "a" );		//NULL check if file not found (errno)
-    if(contactfile)
-    {
-        fprintf( contactfile, "%s\n", contact );
-        fclose(contactfile);
-    }
-    else
-    {
-        fprintf( stderr, "Can't append contact to contactlist in the users chatnut directory at $HOME/.chatnut/[user]: %s\n", strerror(errno) );
-    }
+    add_contact_to_list(contact);
+    add_contact_to_list_view(contact);
 
     return;
 }
