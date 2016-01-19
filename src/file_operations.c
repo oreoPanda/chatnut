@@ -2,6 +2,8 @@
 
 #include "file_operations.h"
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 
 extern GtkListStore *create_contact_list_model(void)
 {
@@ -24,7 +26,7 @@ extern GtkListStore *create_contact_list_model(void)
     else
     {
         /*create contact list model with name and online status for each contact*/
-        store = gtk_list_store_new( 2, G_TYPE_STRING, G_TYPE_BOOLEAN );
+        store = gtk_list_store_new( 1, G_TYPE_STRING );
 
         //get file length
         fseek( contactlist, 0, SEEK_END );
@@ -35,6 +37,8 @@ extern GtkListStore *create_contact_list_model(void)
         //read from file
         fread( raw_list, sizeof(char), raw_list_len, contactlist );
         raw_list[raw_list_len] = 0;
+        
+        //close file
         fclose(contactlist);
 
         //crunch data
@@ -49,13 +53,13 @@ extern GtkListStore *create_contact_list_model(void)
             }
             int nameLen = i-name_pos;
             name = calloc( nameLen+1, sizeof(char) );	//name + '\0'
-            strncpy( name, raw_list+name_pos, nameLen );	//right after raw_list[nameLen] is a '\n', so strncpy wouldn't put a '\0'
+            strncpy( name, raw_list+name_pos, nameLen );//right after raw_list[nameLen] is a '\n', so strncpy wouldn't put a '\0'
             name[i] = '\0';		//adding terminator here cuz strncpy wouldn't do it in this case
             i++;//skip past '\n'
 
             //add the name to the contact list model
             gtk_list_store_append( store, &iter );
-            gtk_list_store_set( store, &iter, 0, name, 1, FALSE, -1 );
+            gtk_list_store_set( store, &iter, 0, name, -1 );
 
             free(name);
         }
@@ -63,6 +67,24 @@ extern GtkListStore *create_contact_list_model(void)
         free(raw_list);
 
         return store;
+    }
+}
+
+extern void add_contact_to_list(const char *contact)
+{
+    FILE *contactfile = NULL;
+    char *filename = "contactlist";	//is this on heap or stack? no malloc(), so no free() or?
+
+    /*open file and write to it*/
+    contactfile = fopen( filename, "a" );		//NULL check if file not found (errno)
+    if(contactfile)
+    {
+        fprintf( contactfile, "%s\n", contact );
+        fclose(contactfile);
+    }
+    else
+    {
+        fprintf( stderr, "Can't append contact to contactlist in the users chatnut directory at $HOME/.chatnut/[user]: %s\n", strerror(errno) );
     }
 }
 
