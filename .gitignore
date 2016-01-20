@@ -55,9 +55,7 @@ autom4te.cache
 config.h
 config.log
 config.status
-Makefile.in
 Makefile
 stamp-h1
-src/Makefile.in
 src/Makefile
 src/.deps
