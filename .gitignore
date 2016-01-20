@@ -38,14 +38,26 @@ data/
 # Netbeans project folder
 nbproject/
 
+# Eclipse settings folder
+.settings
+
+# Eclipse project files
+.cproject
+.project
+
 # gedit backup files
 *~
+
+# log files created by autoreconf --install
+autom4te.cache
 
 # files created by ./configure
 config.h
 config.log
 config.status
+Makefile.in
 Makefile
 stamp-h1
+src/Makefile.in
 src/Makefile
 src/.deps

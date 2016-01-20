@@ -32,6 +32,10 @@ extern char *get_buddy(void)
 /*set buddy by copying name*/
 extern void set_buddy(char *name)
 {
+	if(buddy)
+	{
+		free(buddy);
+	}
     buddy = calloc( strlen(name)+1, sizeof(char) );
     strncpy( buddy, name, strlen(name)+1 );
 
