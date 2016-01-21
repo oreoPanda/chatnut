@@ -38,7 +38,8 @@ data/
 # Netbeans project folder
 nbproject/
 
-# Eclipse settings folder
+# Eclipse folders
+Debug
 .settings
 
 # Eclipse project files
