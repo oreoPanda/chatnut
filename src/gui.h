@@ -19,7 +19,6 @@ extern void show_message_history( const char *history );
 extern void append_to_history_view( const char *buffer, const char *sender );
 extern void create_right_grid(void);
 extern void create_list_view(GtkListStore *model);
-extern void functionalize_list_view( void (*contact_selected_func)( GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, gpointer ) );
 extern void add_contact_to_list_view(const char *contact);
 extern void create_label(const gchar *message);
 extern void destroy_label(void);

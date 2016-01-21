@@ -3,12 +3,15 @@
 #include "user.h"
 #include "file_operations.h"
 #include "gui.h"
+#include "gui_interaction.h"
 #include <string.h>
 #include <errno.h>
 
 extern void handle_buddy_is_set(char *username)
 {
-    set_buddy(username);    
+    set_buddy(username);
+
+    enable_input_view(input_view_key_pressed_cb, input_view_key_released_cb);
 
     return;
 }

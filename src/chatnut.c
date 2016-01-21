@@ -113,7 +113,6 @@ static void evaluate_incoming(const char *data)
             if(model)
             {
                 create_list_view(model);
-                functionalize_list_view(contact_selection_handler);
             }
             else
             {

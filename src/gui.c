@@ -245,14 +245,9 @@ extern void create_list_view(GtkListStore *store)
     column = gtk_tree_view_column_new_with_attributes( "Name", renderer, "text", 0, NULL );//"text" is an attribute (property) of a GtkCellRendererText
     gtk_tree_view_append_column( GTK_TREE_VIEW(list), column );
 
+    g_signal_connect( list, "row-activated", G_CALLBACK(contact_selection_handler), NULL );
+
     gtk_widget_show(list);
-
-    return;
-}
-
-extern void functionalize_list_view( void (*contact_selected_func)( GtkTreeView *, GtkTreePath *, GtkTreeViewColumn *, gpointer ) )
-{
-    g_signal_connect( list, "row-activated", G_CALLBACK(contact_selected_func), NULL );
 
     return;
 }

@@ -182,9 +182,6 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
             strncat( command, contact_name, strlen(contact_name) );
             write_to_channel( command, NULL );
 
-            //TODO move to contact_selected_finish()
-            enable_input_view(input_view_key_pressed_cb, input_view_key_released_cb);
-
             //TODO g_free() or free(), difference??
             free(command);
         }
