@@ -1,0 +1,61 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+src/chatnut
+
+# Debug files
+*.dSYM/
+
+# Data folder
+data/
+
+# Netbeans project folder
+nbproject/
+
+# Eclipse settings folder
+.settings
+
+# Eclipse project files
+.cproject
+.project
+
+# gedit backup files
+*~
+
+# log files created by autoreconf --install
+autom4te.cache
+
+# files created by ./configure
+config.h
+config.log
+config.status
+Makefile
+stamp-h1
+src/Makefile
+src/.deps
