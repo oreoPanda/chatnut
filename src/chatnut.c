@@ -11,8 +11,6 @@
 #include "file_operations.h"
 #include "user.h"
 
-//TODO WARNING: 'automake-1.13' is missing on your system.
-
 typedef enum reply commandreply;
 
 enum reply
