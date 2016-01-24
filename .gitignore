@@ -4,14 +4,14 @@
 # Executable
 src/chatnut
 
-# Netbeans data folder
+# NetBeans data folder
 data/
 
-# Netbeans project folder
+# NetBeans project folder
 nbproject/
 
 # Eclipse folders
-.settings
+.settings/
 
 # Eclipse project files
 .cproject
