@@ -40,22 +40,21 @@ extern void create_window(void)
 }
 
 extern void create_main_pane(void)
-{
-        pane = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
-        //printf( "%i", gtk_paned_get_position(GTK_PANED(pane)) );
+{   
+    pane = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_paned_set_position( GTK_PANED(pane), 350 );
 
-        gtk_widget_show(pane);
+    gtk_widget_show(pane);
 
         return;
 }
 
 extern void create_left_pane(void)
-{
-        lpane = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
-        //printf( "%i", gtk_paned_get_position(GTK_PANED(lpane)) );
-        //gtk_paned_set_position( GTK_PANED(lpane), 700 );
+{   
+    lpane = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
+    gtk_paned_set_position( GTK_PANED(lpane), 450 );
 
-        gtk_widget_show(lpane);
+    gtk_widget_show(lpane);
 
         return;
 }
