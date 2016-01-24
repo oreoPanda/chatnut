@@ -20,6 +20,8 @@ GtkWidget *window = NULL,
 GtkWidget *dialog_add_contact = NULL,
                 *dialog_login = NULL;
 
+gboolean input_view_enabled = FALSE;
+
 //TODO the destroy signal needs to call a quit function, the quit function needs to shutdown the GIOChannel and call gtk_main_quit
 extern void create_window(void)
 {
@@ -191,6 +193,7 @@ extern void create_input_view(void)
     gtk_text_view_set_editable( GTK_TEXT_VIEW(input_view), FALSE );
     gtk_text_view_set_cursor_visible( GTK_TEXT_VIEW(input_view), FALSE );
     gtk_text_view_set_wrap_mode( GTK_TEXT_VIEW(input_view), GTK_WRAP_WORD_CHAR );
+    input_view_enabled = FALSE;
 
     //visible
     gtk_widget_show(input_view);
@@ -198,15 +201,21 @@ extern void create_input_view(void)
     return;
 }
 
-extern void enable_input_view( gboolean (*key_pressed_cb)( GtkWidget *, GdkEvent *, gpointer ),
-                                gboolean (*key_released_cb)( GtkWidget *, GdkEvent *, gpointer) )
+extern gboolean input_view_get_enabled(void)
+{
+	return input_view_enabled;
+}
+
+extern void enable_input_view(void)
 {
         gtk_text_view_set_editable( GTK_TEXT_VIEW(input_view), TRUE );
         gtk_text_view_set_cursor_visible( GTK_TEXT_VIEW(input_view), TRUE );
 
         //TODO make sure this is disconnected when input view is disabled
-        g_signal_connect( input_view, "key-press-event", G_CALLBACK(key_pressed_cb), NULL );
-        g_signal_connect( input_view, "key-release-event", G_CALLBACK(key_released_cb), NULL );
+        g_signal_connect( input_view, "key-press-event", G_CALLBACK(input_view_key_pressed_cb), NULL );
+        g_signal_connect( input_view, "key-release-event", G_CALLBACK(input_view_key_released_cb), NULL );
+
+        input_view_enabled = TRUE;
 
         return;
 }

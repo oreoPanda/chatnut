@@ -12,8 +12,8 @@ extern void create_history_scrollbox(void);
 extern void create_history_view(void);
 extern void create_input_scrollbox(void);
 extern void create_input_view(void);
-extern void enable_input_view( gboolean (*key_pressed_cb)( GtkWidget *, GdkEvent *, gpointer ),
-                                gboolean (*key_released_cb)( GtkWidget *, GdkEvent *, gpointer) );
+extern gboolean input_view_get_enabled(void);
+extern void enable_input_view(void);
 extern void clear_input_view(void);
 extern void show_message_history( const char *history );
 extern void append_to_history_view( const char *buffer, const char *sender );
