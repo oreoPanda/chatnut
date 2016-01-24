@@ -8,6 +8,7 @@ default:
 	cd src && make --quiet chatnut
 
 clean:
+	rm -f .*~
 	cd src && make --quiet clean
 
 remove:
