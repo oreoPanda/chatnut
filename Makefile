@@ -1,4 +1,8 @@
+
 #Makefile
+
+all:
+	cd src && make --quiet chatnut
 
 default:
 	cd src && make --quiet chatnut
