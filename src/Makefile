@@ -15,13 +15,12 @@ chatnut: $(objects)
 	gcc -c $< -o $@ $(cflags)
 
 clean:
+	echo "Removing executable"
+	rm -f chatnut
 	echo "Removing objects"
 	rm -f *.o
 	echo "Removing temporary files created by gedit"
 	rm -f *~
-
-remove:
-	rm -f chatnut
 
 # $@: target
 # @<: first prerequisite
