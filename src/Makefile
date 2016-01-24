@@ -4,8 +4,6 @@ objects = chatnut.o connection.o connection_raw.o file_operations.o gui.o gui_in
 cflags = -Wall -Wextra -std=c99 `pkg-config --cflags gtk+-3.0`
 libs = `pkg-config --libs gtk+-3.0`
 
-default: chatnut
-
 chatnut: $(objects)
 	echo "Linking "$(objects)
 	gcc $(objects) -o $@ $(libs)
