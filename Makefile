@@ -10,6 +10,3 @@ default:
 clean:
 	rm -f .*~
 	cd src && make --quiet clean
-
-remove:
-	cd src && make --quiet remove
