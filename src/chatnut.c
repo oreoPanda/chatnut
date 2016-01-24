@@ -2,7 +2,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>	//for mkdir()
 
 #include "connection.h"
 #include "gui.h"

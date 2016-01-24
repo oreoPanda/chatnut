@@ -1,9 +1,12 @@
 /*file_operations.c*/
 
-#include "file_operations.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>	//for mkdir()
+
+#include "file_operations.h"
+#include "user.h"
 
 extern GtkListStore *create_contact_list_model(void)
 {
