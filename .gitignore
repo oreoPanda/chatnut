@@ -3,6 +3,7 @@
 
 # Executable
 src/chatnut
+src/chatnut-debug
 
 # NetBeans data folder
 data/
@@ -19,3 +20,4 @@ nbproject/
 
 # gedit backup files
 *~
+/Release/
