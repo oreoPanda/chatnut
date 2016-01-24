@@ -112,11 +112,11 @@ extern void load_history( const char *contact, char **to )
     {
         fseek( history_file, 0, SEEK_END );
         //TODO check these comments, they seem confusing...
-        file_len = ftell(history_file);		//all characters + one additional '\n'
+        file_len = ftell(history_file);		//number of characters including the terminating '\n'
         rewind(history_file);
-        *to = calloc( file_len, sizeof(char) );	//all characters (including additional '\n') + '\0' (TODO check: the '\n' is part of all characters)
+        *to = calloc( file_len, sizeof(char) );	//all characters (including '\n')
         fread( *to, sizeof(char), file_len, history_file );
-        *( *to+(file_len) ) = '\0';
+        *( *to+(file_len-1) ) = '\0';		//substitute a '\0' for the '\n'
     }
     else
     {
