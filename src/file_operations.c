@@ -107,20 +107,26 @@ extern void load_history( const char *contact, char **to )
     }
 
     /*open file and read from it*/
-    history_file = fopen( filename, "r" );		//NULL check if file not found (errno)
+    history_file = fopen( filename, "r" );
     if( history_file != NULL )
     {
         fseek( history_file, 0, SEEK_END );
-        //TODO check these comments, they seem confusing...
-        file_len = ftell(history_file);		//number of characters including the terminating '\n'
+        file_len = ftell(history_file);		//number of characters including the terminating '\n' - or 0 when empty
         rewind(history_file);
-        *to = calloc( file_len, sizeof(char) );	//all characters (including '\n')
-        fread( *to, sizeof(char), file_len, history_file );
-        *( *to+(file_len-1) ) = '\0';		//substitute a '\0' for the '\n'
+        if( file_len > 0 )
+        {
+			*to = calloc( file_len, sizeof(char) );	//all characters (including '\n')
+			fread( *to, sizeof(char), file_len, history_file );
+			*( *to+(file_len-1) ) = '\0';		//substitute a '\0' for the '\n'
+        }
+        else
+        {
+        	*to = NULL;		//set the history storage string to NULL
+        }
     }
     else
     {
-        *to = NULL;		//set the history storage buffer to NULL
+        *to = NULL;		//set the history storage string to NULL
         fprintf( stderr, "Unable to open user's chat history for contact in $HOME/.chatnut/[user]/history: %s\n", strerror(errno) );
     }
     
@@ -130,10 +136,11 @@ extern void load_history( const char *contact, char **to )
     return;
 }
 
-extern void append_to_history( const char *message, const char *username )
+/*received should be TRUE when this is a received message, FALSE if user sent it*/
+extern void append_to_history( const char *message, const char *buddyname, gboolean received )
 {
     FILE *historyfile = NULL;
-    const char *filename = username;
+    const char *filename = buddyname;
     const char *path = "history";
     
     /*switch to directory*/
@@ -147,6 +154,14 @@ extern void append_to_history( const char *message, const char *username )
     historyfile = fopen( filename, "a" );		//NULL check if file not found (errno)
     if(historyfile)
     {
+    	if( received == TRUE )
+    	{
+    		fprintf( historyfile, "%s: ", buddyname );
+    	}
+    	else
+    	{
+    		fprintf( historyfile, "%s: ", get_username() );
+    	}
         fprintf( historyfile, "%s\n", message );
         fclose(historyfile);	//TODO log an error if there is one
     }

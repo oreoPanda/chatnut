@@ -138,9 +138,9 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
 {
     GtkTreeSelection *selection = NULL;
     GtkTreeIter iter;		//will be set to the selected row
-    GtkTreeModel *model;
-    char *contact_name;
-    char *history;
+    GtkTreeModel *model = NULL;
+    char *contact_name = NULL;
+    char *history = NULL;
     
     if( data != NULL )
     {
@@ -162,11 +162,13 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
         //get the selected contact's name and load it's chat history into the message_view
         gtk_tree_model_get( model, &iter, 0, &contact_name, -1 );
         load_history( contact_name, &history );
-        show_message_history( history );
-        free(history);
+        if( history )
+        {
+        	show_message_history( history );
+        	free(history);
+        }
 
         /*if connected, send the server a /unwho command and a /who command to specify who we're talking to*/
-        // /unwho
         if( channel_not_null() )
         {
             char *command = NULL;
@@ -182,7 +184,6 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
             strncat( command, contact_name, strlen(contact_name) );
             write_to_channel( command, NULL );
 
-            //TODO g_free() or free(), difference??
             free(command);
         }
     }
@@ -230,7 +231,7 @@ extern gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event
             write_to_channel( text, get_username() );
 
             /*append textstring to history and maybe to historyview*/
-            append_to_history( text, get_buddy() );
+            append_to_history( text, get_buddy(), FALSE );
             append_to_history_view( text, get_username() );
 
             /*free text, since it is a non-const string returned from a gtk function*/

@@ -8,7 +8,7 @@
 extern GtkListStore *create_contact_list_model(void);
 extern void add_contact_to_list(const char *contact);
 extern void load_history( const char *contact, char **to );
-extern void append_to_history( const char *message, const char *username );
+extern void append_to_history( const char *message, const char *buddyname, gboolean received );
 extern int init_chatnut_directory(void);
 extern int init_user_directory(void);
 

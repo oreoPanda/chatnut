@@ -35,20 +35,20 @@ enum reply
 //TODO check if strncpy and strncat return values matter for moved strings
 
 /*returns a pointer to the part of message where the actual message begins, this pointer should not be freed separately from message*/
-const char *strip_username( const char *message, char **username )
+const char *strip_buddyname( const char *message, char **buddyname )
 {
-    int usernamelength = -1;
+    int namelength = -1;
 
-    /*calculate length of username*/
-    while( *(message + ++usernamelength) != ' ' );
+    /*calculate length of buddyname*/
+    while( *(message + ++namelength) != ' ' );
 
-    /*copy username from message*/
-    *username = calloc( usernamelength+1, sizeof(char) );
-    strncpy( *username, message, usernamelength+1 );//copies a space to last index
-    *( *(username)+usernamelength ) = '\0';
+    /*copy buddyname from message*/
+    *buddyname = calloc( namelength+1, sizeof(char) );
+    strncpy( *buddyname, message, namelength+1 );//copies a space to last index
+    *( *(buddyname)+namelength ) = '\0';
 
     /*message_only should point to the start of the actual message*/
-    const char *message_only = message+usernamelength+1;
+    const char *message_only = message+namelength+1;
 
     return message_only;
 }
@@ -98,11 +98,11 @@ static void evaluate_incoming(const char *data)
         {
             printf( "(evaluate_incoming)Login success\n");
 
-            /*get username string*/
-            char *username = NULL;
-            strip_username( message, &username );//return value (which should net be free()d) ignored, username should be free()d
-            handle_login_success(username);
-            free(username);
+            /*get buddyname string*/
+            char *buddyname = NULL;
+            strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, username should be free()d
+            handle_login_success(buddyname);
+            free(buddyname);
 
             /*load and show contacts*/
             destroy_label();
@@ -121,11 +121,11 @@ static void evaluate_incoming(const char *data)
         case BUDDY_IS_SET:
         {
             printf( "(evaluate_incoming)BUDDY_IS_SET\n");
-            /*get username string*/
-            char *username = NULL;
-            strip_username( message, &username );//return value (which should net be free()d) ignored, username should be free()d
-            handle_buddy_is_set(username);
-            free(username);
+            /*get buddyname string*/
+            char *buddyname = NULL;
+            strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, username should be free()d
+            handle_buddy_is_set(buddyname);
+            free(buddyname);
 
             break;
         }
@@ -150,30 +150,33 @@ static void evaluate_incoming(const char *data)
         case LOOKUP_SUCCESS:
         {
             printf( "(evaluate_incoming)Lookup success\n");
-            /*get username string*/
-            char *username = NULL;
-            strip_username( message, &username );//return value (which should net be free()d) ignored, username should be free()d
-            handle_lookup_success( username );
-            free(username);
+            /*get buddyname string*/
+            char *buddyname = NULL;
+            strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, buddyname should be free()d
+            handle_lookup_success( buddyname );
+            free(buddyname);
             
             break;
         }
         case MESSAGE:
         {
-            /*get username string and a pointer to the actual message part of message*/
-            char *username = NULL;
-            const char *raw_message = strip_username( message, &username );//raw_message should not be freed, username should be
+            /*get buddyname string and a pointer to the actual message part of message*/
+            char *buddy_username = NULL;
+            const char *raw_message = strip_buddyname( message, &buddy_username );//raw_message should not be freed, username should be
 
             //TODO I got up to here checking the process of an incoming message, continue checking below this line
 
             /*append the actual message to history*/
-            append_to_history( raw_message, username );
-            if( strcmp( get_buddy(), username ) == 0 )
+            append_to_history( raw_message, buddy_username, TRUE );
+            if( get_buddy() )
             {
-                append_to_history_view( raw_message, username );
+				if( strcmp( get_buddy(), buddy_username ) == 0 )
+				{
+					append_to_history_view( raw_message, buddy_username );
+				}
             }
 
-            free(username);
+            free(buddy_username);
 
             break;
         }
