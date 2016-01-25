@@ -2,11 +2,13 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <glib.h>
 
 #include "user.h"
 
 char *username = NULL;
 char *buddy = NULL;
+gboolean buddy_online = FALSE;		//for later use
 
 /*returns a pointer to username, this pointer should not be free()d*/
 extern char *get_username(void)
