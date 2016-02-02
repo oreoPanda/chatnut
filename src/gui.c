@@ -21,6 +21,7 @@ GtkWidget *dialog_add_contact = NULL,
                 *dialog_login = NULL;
 
 gboolean input_view_enabled = FALSE;
+gboolean contains_label = FALSE;
 
 //TODO the destroy signal needs to call a quit function, the quit function needs to shutdown the GIOChannel and call gtk_main_quit
 extern void create_window(void)
@@ -241,28 +242,37 @@ extern void create_right_grid(void)
     return;
 }
 
-extern void create_list_view(GtkListStore *store)
+/*create a GtkTreeView with one column that has a GtkCellRendererText*/
+extern void init_list_view(void)
 {
-    GtkTreeViewColumn *column = NULL;
-    GtkCellRenderer *renderer = NULL;
+	GtkTreeViewColumn *column = NULL;
+	GtkCellRenderer *renderer = NULL;
 
-    //graphical, create a GtkTreeView
-    list = gtk_tree_view_new_with_model( GTK_TREE_MODEL(store) );
-    gtk_tree_view_set_headers_visible( GTK_TREE_VIEW(list), FALSE );
-    gtk_widget_set_hexpand( list, TRUE );
-    gtk_widget_set_vexpand( list, TRUE );
-    gtk_tree_view_set_activate_on_single_click( GTK_TREE_VIEW(list), FALSE );
+	list = gtk_tree_view_new();
 
-    //name column
-    renderer = gtk_cell_renderer_text_new();
-    column = gtk_tree_view_column_new_with_attributes( "Name", renderer, "text", 0, NULL );//"text" is an attribute (property) of a GtkCellRendererText
-    gtk_tree_view_append_column( GTK_TREE_VIEW(list), column );
+	gtk_tree_view_set_headers_visible( GTK_TREE_VIEW(list), FALSE );
+	gtk_widget_set_hexpand( list, TRUE );
+	gtk_widget_set_vexpand( list, TRUE );
+	gtk_tree_view_set_activate_on_single_click( GTK_TREE_VIEW(list), FALSE );
 
-    g_signal_connect( list, "row-activated", G_CALLBACK(contact_selection_handler), NULL );
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes( "Name", renderer, "text", 0, NULL );//"text" is an attribute (property) of a GtkCellRendererText
+	gtk_tree_view_append_column( GTK_TREE_VIEW(list), column );
 
-    gtk_widget_show(list);
+	g_signal_connect( list, "row-activated", G_CALLBACK(contact_selection_handler), NULL );
 
-    return;
+
+	return;
+}
+
+extern void show_list_view(GtkListStore *store)
+{
+	/*add the model to the treeview*/
+	gtk_tree_view_set_model( GTK_TREE_VIEW(list), GTK_TREE_MODEL(store) );
+
+	gtk_widget_show(list);
+
+	return;
 }
 
 extern void add_contact_to_list_view(const char *contact)
@@ -290,69 +300,75 @@ extern void create_label(const gchar *message)
 
 extern void destroy_label(void)
 {
-        gtk_widget_destroy(label);
+	gtk_widget_destroy(label);
 
-        return;
+	return;
 }
 
 extern void create_buttons(void)
 {
-        button_contacts = gtk_button_new_with_label("Contacts");
-        gtk_widget_show(button_contacts);
+	button_contacts = gtk_button_new_with_label("Contacts");
+	gtk_widget_show(button_contacts);
 
-        button_chats = gtk_button_new_with_label("Chats");
-        gtk_widget_show(button_chats);
+	button_chats = gtk_button_new_with_label("Chats");
+	gtk_widget_show(button_chats);
 
-        button_settings = gtk_button_new_with_label("Settings");
-        gtk_widget_show(button_settings);
+	button_settings = gtk_button_new_with_label("Settings");
+	gtk_widget_show(button_settings);
 
-        button_add_contact = gtk_button_new_with_label("Add Contact");
-        gtk_widget_show(button_add_contact);
+	button_add_contact = gtk_button_new_with_label("Add Contact");
+	gtk_widget_show(button_add_contact);
 
-        return;
+	return;
 }
 
 extern void populate_window(void)
 {
-        gtk_container_add( GTK_CONTAINER(window), pane );
-        gtk_paned_add1( GTK_PANED(pane), lpane );
-        gtk_paned_add2( GTK_PANED(pane), rgrid );
+	gtk_container_add( GTK_CONTAINER(window), pane );
+	gtk_paned_add1( GTK_PANED(pane), lpane );
+	gtk_paned_add2( GTK_PANED(pane), rgrid );
 
-        gtk_paned_add1( GTK_PANED(lpane), history_scrollbox );
-        gtk_paned_add2( GTK_PANED(lpane), input_scrollbox );
-        gtk_container_add( GTK_CONTAINER(history_scrollbox), history_view );
-        gtk_container_add( GTK_CONTAINER(input_scrollbox), input_view );
+	gtk_paned_add1( GTK_PANED(lpane), history_scrollbox );
+	gtk_paned_add2( GTK_PANED(lpane), input_scrollbox );
+	gtk_container_add( GTK_CONTAINER(history_scrollbox), history_view );
+	gtk_container_add( GTK_CONTAINER(input_scrollbox), input_view );
 
-        gtk_grid_attach( GTK_GRID(rgrid), button_contacts, 0, 0, 1, 1 );
-        gtk_grid_attach( GTK_GRID(rgrid), button_chats, 1, 0, 1, 1 );
-        gtk_grid_attach( GTK_GRID(rgrid), button_settings, 2, 0, 1, 1 );
+	gtk_grid_attach( GTK_GRID(rgrid), button_contacts, 0, 0, 1, 1 );
+	gtk_grid_attach( GTK_GRID(rgrid), button_chats, 1, 0, 1, 1 );
+	gtk_grid_attach( GTK_GRID(rgrid), button_settings, 2, 0, 1, 1 );
 
-        gtk_grid_attach( GTK_GRID(rgrid), label, 0, 1, 3, 1 );
-        gtk_grid_attach( GTK_GRID(rgrid), button_add_contact, 0, 2, 3, 1 );
+	gtk_grid_attach( GTK_GRID(rgrid), label, 0, 1, 3, 1 );
+	contains_label = TRUE;
+	gtk_grid_attach( GTK_GRID(rgrid), button_add_contact, 0, 2, 3, 1 );
 
-        return;
+	return;
 }
 
-extern void populate_window_with_list_or_label(void)
+extern void populate_window_with_list(void)
 {
-    if(list)
-    {
-        gtk_grid_attach( GTK_GRID(rgrid), list, 0, 1, 3, 1 );
-    }
-    else
-    {
-        gtk_grid_attach( GTK_GRID(rgrid), label, 0, 1, 3, 1 );
-    }
-    
+	gtk_grid_attach( GTK_GRID(rgrid), list, 0, 1, 3, 1 );
+	contains_label = FALSE;
     return;
 }
 
-/*TODO this call can be put into the function for the button...*/
+extern void populate_window_with_label(void)
+{
+	gtk_grid_attach( GTK_GRID(rgrid), label, 0, 1, 3, 1 );
+	contains_label = TRUE;
+	return;
+}
+
+/*TODO this call can be put into the function for the button...  ...no?, enabled after login!*/
 extern void enable_add_contact_button(void)
 {
     g_signal_connect( button_add_contact, "clicked", G_CALLBACK(popup_add_contact), NULL );
 
     return;
+}
+
+extern gboolean window_contains_label(void)
+{
+	return contains_label;
 }
 
 extern gboolean popup_login(gpointer data)

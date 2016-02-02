@@ -161,7 +161,7 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
     {
         //get the selected contact's name and load it's chat history into the message_view
         gtk_tree_model_get( model, &iter, 0, &contact_name, -1 );
-        load_history( contact_name, &history );
+        load_file( "history", contact_name, &history );
         if( history )
         {
         	show_message_history( history );
@@ -184,6 +184,7 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
             strncat( command, contact_name, strlen(contact_name) );
             write_to_channel( command, NULL );
 
+            g_free(contact_name);
             free(command);
         }
     }

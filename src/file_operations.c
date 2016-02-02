@@ -8,132 +8,198 @@
 #include "file_operations.h"
 #include "user.h"
 
+/*loads contacts from file into a GtkListStore*/
 extern GtkListStore *create_contact_list_model(void)
 {
     GtkListStore *store = NULL;
     GtkTreeIter iter;
 
-    FILE *contactlist = NULL;
-    char *filename = "contactlist";
-    int raw_list_len;
     char *raw_list = NULL;
-    char *name = NULL;
+    char **contacts = NULL;
+    int count = 0;
 
-    /*open contact list file and load its contents into memory*/
-    contactlist = fopen( filename, "r" );
-    if( contactlist == NULL )
+    /*load contact list from file*/
+    if( load_file( NULL, "contactlist", &raw_list ) )
     {
-        fprintf( stdout, "Warning, no contactlist found for user." );
-        return store;
-    }
-    else
-    {
+    	count = separate_lines( raw_list, &contacts );
+
         /*create contact list model with name and online status for each contact*/
         store = gtk_list_store_new( 1, G_TYPE_STRING );
 
-        //get file length
-        fseek( contactlist, 0, SEEK_END );
-        raw_list_len = ftell(contactlist);
-        rewind(contactlist);
-        //set up data buffer
-        raw_list = calloc( raw_list_len+1, sizeof(char) );	//one extra for '\0'
-        //read from file
-        fread( raw_list, sizeof(char), raw_list_len, contactlist );
-        raw_list[raw_list_len] = 0;
-        
-        //close file
-        fclose(contactlist);
-
-        //crunch data
-        int i = 0;
-        while( raw_list[i] != 0 )
+		/*add contacts to the list store*/
+        for( int i = 0; i < count; i++ )
         {
-            //get one name at a time
-            int name_pos = i;
-            while( raw_list[i] != '\n' )
-            {
-                i++;
-            }
-            int nameLen = i-name_pos;
-            name = calloc( nameLen+1, sizeof(char) );	//name + '\0'
-            strncpy( name, raw_list+name_pos, nameLen );//right after raw_list[nameLen] is a '\n', so strncpy wouldn't put a '\0'
-            name[i] = '\0';		//adding terminator here cuz strncpy wouldn't do it in this case
-            i++;//skip past '\n'
-
-            //add the name to the contact list model
-            gtk_list_store_append( store, &iter );
-            gtk_list_store_set( store, &iter, 0, name, -1 );
-
-            free(name);
+        	gtk_list_store_append( store, &iter );
+        	gtk_list_store_set( store, &iter, 0, *(contacts+i), -1 );
         }
-
-        free(raw_list);
 
         return store;
     }
-}
-
-extern void add_contact_to_list(const char *contact)
-{
-    FILE *contactfile = NULL;
-    char *filename = "contactlist";	//is this on heap or stack? no malloc(), so no free() or?
-
-    /*open file and write to it*/
-    contactfile = fopen( filename, "a" );		//NULL check if file not found (errno)
-    if(contactfile)
-    {
-        fprintf( contactfile, "%s\n", contact );
-        fclose(contactfile);
-    }
     else
     {
-        fprintf( stderr, "Can't append contact to contactlist in the users chatnut directory at $HOME/.chatnut/[user]: %s\n", strerror(errno) );
+    	return NULL;
     }
 }
 
-//stores history of contact in to
-extern void load_history( const char *contact, char **to )
+/*separates raw contents read from a file into lines*/
+static size_t separate_lines( const char *raw, char ***lines )
 {
-    FILE *history_file = NULL;
-    int file_len = 0;
-    const char *filename = contact;
-    const char *path = "history";
+	/*separate contents by line*/
+	int line_count = 0;
+	unsigned int position = 0;
+	int line_start = 0;
+	int line_len = 0;
+	int len = strlen(raw);
 
-    /*switch to directory*/
-    if( chdir(path) != 0 )
-    {
-        fprintf( stderr, "Unable to switch into user's history directory in $HOME/.chatnut/[user]: %s\n", strerror(errno) );
-        return;
-    }
+	if(raw)
+	{
+		while( position < strlen(raw)+1 )
+		{
+			if( raw[position] == '\n' || raw[position] =='\0' )
+			{
+				line_count++;
+				line_len = position-line_start;		//length of line excluding '\n'
 
-    /*open file and read from it*/
-    history_file = fopen( filename, "r" );
-    if( history_file != NULL )
-    {
-        fseek( history_file, 0, SEEK_END );
-        file_len = ftell(history_file);		//number of characters including the terminating '\n' - or 0 when empty
-        rewind(history_file);
-        if( file_len > 0 )
-        {
-			*to = calloc( file_len, sizeof(char) );	//all characters (including '\n')
-			fread( *to, sizeof(char), file_len, history_file );
-			*( *to+(file_len-1) ) = '\0';		//substitute a '\0' for the '\n'
-        }
-        else
-        {
-        	*to = NULL;		//set the history storage string to NULL
-        }
-    }
-    else
-    {
-        *to = NULL;		//set the history storage string to NULL
-        fprintf( stderr, "Unable to open user's chat history for contact in $HOME/.chatnut/[user]/history: %s\n", strerror(errno) );
-    }
-    
-    /*switch back to parent directory*/
-    chdir("../");
+				/*reserve enough space for another line*/
+				if( !( *lines = realloc(*lines, line_count*sizeof(char *)) ) )
+				{
+					line_count--;
+					break;
+				}
+				/*reserve enough space in the new line*/
+				if( !( *( *(lines)+(line_count-1) ) = calloc( line_len+1, sizeof(char)) ) )	//one extra for '\0'
+				{
+					line_count--;
+					break;
+				}
+				strncpy( *( *lines+(line_count-1) ), raw+line_start, line_len );
+				*( *( *lines+(line_count-1) ) + line_len ) = '\0';
 
-    return;
+				line_start = position+1;
+			}
+
+			position++;
+		}
+
+	}
+
+	return line_count;
+}
+
+/*add a contact to the contactlist if it doesn't already exsit*/
+extern gboolean add_contact_to_list(const char *contact)
+{
+	char *content = NULL;
+	char **contacts = NULL;
+	size_t line_count = 0;
+	gboolean contact_exists = FALSE;
+
+	/*load raw contents of the contact file into memory*/
+	if( load_file( NULL, "contactlist", &content ) )
+	{
+		/*separate the raw contents by line*/
+		line_count = separate_lines( content, &contacts );
+		free(content);
+
+		/*check if the contact already exists in file*/
+		for( unsigned int i = 0; i < line_count; i++ )
+		{
+			if( strcmp( *(contacts+i), contact ) == 0 )
+			{
+				contact_exists = TRUE;
+				break;
+			}
+		}
+
+		/*free the separated contents*/
+		for( unsigned int i = 0; i < line_count; i++ )
+		{
+			free( *(contacts+i) );
+		}
+		free(contacts);
+	}
+
+	/*if contact doesn't exist yet (or if file doesn't exist), open file and write to it*/
+	if( !contact_exists )
+	{
+		FILE *contactfile = NULL;
+		contactfile = fopen( "contactlist", "a" );
+		if(contactfile)
+		{
+			fprintf( contactfile, "%s\n", contact );
+			fclose(contactfile);
+			return TRUE;
+		}
+		else
+		{
+			fprintf( stderr, "Can't append contact to contactlist in the users .chatnut subdirectory at $HOME/.chatnut/[user]: %s\n", strerror(errno) );
+			return FALSE;
+		}
+	}
+	else
+	{
+		fprintf( stderr, "Contact exists!\n" );
+		return FALSE;
+	}
+}
+
+/*load a file with name name into *to, dir specifies a directory or NULL*/
+extern gboolean load_file( const char *dir, const char *name, char **to )
+{
+	FILE *file = NULL;
+	int length = 0;
+	gboolean loaded = FALSE;
+
+	/*switch to directory*/
+	if( dir )
+	{
+		if( chdir(dir) != 0 )
+		{
+			fprintf( stderr, "Unable to switch into user's history directory in $HOME/.chatnut/[user]: %s\n", strerror(errno) );
+			return FALSE;
+		}
+	}
+
+	/*open file and read from it*/
+	file = fopen( name, "r" );
+	if(!file)
+	{
+		/*no error message since file may just not have been created yet*/
+		*to = NULL;		//set the history storage string to NULL
+		loaded = FALSE;
+	}
+	else
+	{
+		fseek( file, 0, SEEK_END );
+		length = ftell(file);		//number of characters including the terminating '\n' - or 0 when empty
+		rewind(file);
+		if( length > 0 )
+		{
+			if( ( *to = calloc(length, sizeof(char)) ) )	//all characters (including '\n')
+			{
+				fread( *to, sizeof(char), length, file );
+				*( *to+(length-1) ) = '\0';		//substitute a '\0' for the '\n'
+				loaded = TRUE;
+			}
+			else
+			{
+				loaded = FALSE;
+			}
+		}
+		else
+		{
+			*to = NULL;		//set the history storage string to NULL
+			loaded = FALSE;
+		}
+	}
+
+	/*switch back to parent directory*/
+	if( dir )
+	{
+		chdir("../");
+	}
+
+	return loaded;
 }
 
 /*received should be TRUE when this is a received message, FALSE if user sent it*/

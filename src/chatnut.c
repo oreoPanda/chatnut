@@ -63,6 +63,7 @@ static void create_gui(void)
     create_input_scrollbox();
     create_input_view();
     create_right_grid();
+    init_list_view();
     create_label("You are not logged in yet.");
     create_buttons();
 
@@ -104,18 +105,6 @@ static void evaluate_incoming(const char *data)
             handle_login_success(buddyname);
             free(buddyname);
 
-            /*load and show contacts*/
-            destroy_label();
-            GtkListStore *model = create_contact_list_model();
-            if(model)
-            {
-                create_list_view(model);
-            }
-            else
-            {
-                create_label("You don't have any contacts yet.");
-            }
-            populate_window_with_list_or_label();
             break;
         }
         case BUDDY_IS_SET:
