@@ -95,86 +95,87 @@ extern void create_history_view(void)
     return;
 }
 
-extern void show_message_history( const char *history )
+extern void show_message_history(const char *history)
 {
-        GtkTextBuffer *historybuffer = NULL;
-        GtkTextIter end;
-        GtkTextMark *mark;
-        
-        historybuffer = gtk_text_view_get_buffer( GTK_TEXT_VIEW(history_view) );
-        
-        if( history )
-        {
-                gtk_text_buffer_set_text( historybuffer, history, -1 );	//-1 cuz text is terminated
-                
-                /*scroll down*/
-                gtk_text_buffer_get_end_iter( historybuffer, &end );
-                mark = gtk_text_mark_new( NULL, FALSE );
-                gtk_text_buffer_add_mark( historybuffer, mark, &end );
-                gtk_text_view_scroll_to_mark( GTK_TEXT_VIEW(history_view), mark, 0, FALSE, 1.0, 1.0 );
-        }
-        else
-        {
-                gtk_text_buffer_set_text( historybuffer, "<No recent chats found>", -1 );	//-1 cuz text is terminated
-        }
+	GtkTextBuffer *historybuffer = NULL;
+	GtkTextIter end;
+	GtkTextMark *mark;
 
-        return;
+	historybuffer = gtk_text_view_get_buffer( GTK_TEXT_VIEW(history_view) );
+
+	if(history)
+	{
+		//TODO not checking if historybuffer is non-NULL because I think gtktextview always has a gtktextbuffer
+		gtk_text_buffer_set_text( historybuffer, history, -1 );	//-1 cuz text is terminated
+
+		/*scroll down*/
+		gtk_text_buffer_get_end_iter( historybuffer, &end );
+		mark = gtk_text_mark_new( NULL, FALSE );
+		gtk_text_buffer_add_mark( historybuffer, mark, &end );
+		gtk_text_view_scroll_to_mark( GTK_TEXT_VIEW(history_view), mark, 0, FALSE, 1.0, 1.0 );
+	}
+	else
+	{
+		gtk_text_buffer_set_text( historybuffer, "<No recent chats found>", -1 );	//-1 cuz text is terminated
+	}
+
+	return;
 }
 
 extern void append_to_history_view( const char *buffer, const char *sender )
 {
-        GtkTextBuffer *historybuffer = NULL;
-        GtkTextIter start;
-        GtkTextIter end;
-        GtkTextMark *mark;
+	GtkTextBuffer *historybuffer = NULL;
+	GtkTextIter start;
+	GtkTextIter end;
+	GtkTextMark *mark;
 
-        char *history = NULL;
-        unsigned int char_count;
-        char *to_append = NULL;
-        gboolean need_newline = TRUE;
+	char *history = NULL;
+	unsigned int char_count;
+	char *to_append = NULL;
+	gboolean need_newline = TRUE;
 
-        historybuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(history_view));
+	historybuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(history_view));
 
-        /*check for "<No recent chats found>" at the top of historybuffer and remove it*/
-        char_count = gtk_text_buffer_get_char_count(historybuffer);
-        if( char_count == strlen("<No recent chats found>") )
-        {
-                gtk_text_buffer_get_bounds( historybuffer, &start, &end );
-                //TODO check if history needs to be free()d (look at source of gtk_text_buffer)
-                history = gtk_text_buffer_get_text( historybuffer, &start, &end, FALSE );
-                if( strcmp( history, "<No recent chats found>" ) == 0 )
-                {
-                        gtk_text_buffer_delete( historybuffer, &start, &end );
-                        need_newline = FALSE;
-                }
-                free(history);
-        }
-        /*"<No recent chats found>" is not or no longer at the top of historybuffer*/
-        /*prepend a '\n' to buffer and insert into historybuffer*/
-        if(need_newline)
-        {
-                to_append = calloc( 1 + strlen(sender) + 2 + strlen(buffer) + 1, sizeof(char) );
-                *to_append = '\n';
-                strncpy( to_append+1, sender, strlen(sender)+1 );
-                strncat( to_append, ": ", strlen(": ") );
-                strncat( to_append, buffer, strlen(buffer) );
-        }
-        else
-        {
-                to_append = calloc( strlen(sender) + 2 + strlen(buffer) + 1, sizeof(char) );
-                strncpy( to_append, sender, strlen(sender) );
-                strncat( to_append, buffer, strlen(buffer) );
-        }
-        gtk_text_buffer_get_end_iter( historybuffer, &end );
-        gtk_text_buffer_insert( historybuffer, &end, to_append, -1 );
+	/*check for "<No recent chats found>" at the top of historybuffer and remove it*/
+	char_count = gtk_text_buffer_get_char_count(historybuffer);
+	if( char_count == strlen("<No recent chats found>") )
+	{
+		gtk_text_buffer_get_bounds( historybuffer, &start, &end );
+		//TODO check if history needs to be free()d (look at source of gtk_text_buffer)
+		history = gtk_text_buffer_get_text( historybuffer, &start, &end, FALSE );
+		if( strcmp( history, "<No recent chats found>" ) == 0 )
+		{
+			gtk_text_buffer_delete( historybuffer, &start, &end );
+			need_newline = FALSE;
+		}
+		free(history);
+	}
+	/*"<No recent chats found>" is not or no longer at the top of historybuffer*/
+	/*prepend a '\n' to buffer and insert into historybuffer*/
+	if(need_newline)
+	{
+		to_append = calloc( 1 + strlen(sender) + 2 + strlen(buffer) + 1, sizeof(char) );
+		*to_append = '\n';
+		strncpy( to_append+1, sender, strlen(sender)+1 );
+		strncat( to_append, ": ", strlen(": ") );
+		strncat( to_append, buffer, strlen(buffer) );
+	}
+	else
+	{
+		to_append = calloc( strlen(sender) + 2 + strlen(buffer) + 1, sizeof(char) );
+		strncpy( to_append, sender, strlen(sender) );
+		strncat( to_append, buffer, strlen(buffer) );
+	}
+	gtk_text_buffer_get_end_iter( historybuffer, &end );
+	gtk_text_buffer_insert( historybuffer, &end, to_append, -1 );
 
-        /*scroll down*/
-        gtk_text_buffer_get_end_iter( historybuffer, &end );
-        mark = gtk_text_mark_new( NULL, FALSE );
-        gtk_text_buffer_add_mark( historybuffer, mark, &end );
-        gtk_text_view_scroll_to_mark( GTK_TEXT_VIEW(history_view), mark, 0, FALSE, 1.0, 1.0 );
+	/*scroll down*/
+	gtk_text_buffer_get_end_iter( historybuffer, &end );
+	mark = gtk_text_mark_new( NULL, FALSE );
+	gtk_text_buffer_add_mark( historybuffer, mark, &end );
+	gtk_text_view_scroll_to_mark( GTK_TEXT_VIEW(history_view), mark, 0, FALSE, 1.0, 1.0 );
 
-        return;
+	return;
 }
 
 extern void create_input_scrollbox(void)

@@ -136,60 +136,65 @@ extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
 //TODO error when /who fails
 extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treepath, GtkTreeViewColumn *column, gpointer data )
 {
-    GtkTreeSelection *selection = NULL;
-    GtkTreeIter iter;		//will be set to the selected row
-    GtkTreeModel *model = NULL;
-    char *contact_name = NULL;
-    char *history = NULL;
-    
-    if( data != NULL )
-    {
-        fprintf( stderr, "(contact_selection_handler): GtkTreeViewColumn column is non-NULL but not used.\n" );
-    }
-    if( column )
-    {
-        fprintf( stdout, "(contact_selection_handler): GtkTreeViewColumn column is non-NULL but not used.\n" );
-    }
-    if( treepath )
-    {
-        fprintf( stdout, "(contact_selection_handler): GtkTreePath treepath is non-NULL but not used.\n" );
-    }
+	GtkTreeSelection *selection = NULL;
+	GtkTreeIter iter;		//will be set to the selected row
+	GtkTreeModel *model = NULL;
+	char *contact_name = NULL;
+	char *history = NULL;
 
-    selection = gtk_tree_view_get_selection(treeview);
+	if( data != NULL )
+	{
+		fprintf( stderr, "(contact_selection_handler): GtkTreeViewColumn column is non-NULL but not used.\n" );
+	}
+	if( column )
+	{
+		fprintf( stdout, "(contact_selection_handler): GtkTreeViewColumn column is non-NULL but not used.\n" );
+	}
+	if( treepath )
+	{
+		fprintf( stdout, "(contact_selection_handler): GtkTreePath treepath is non-NULL but not used.\n" );
+	}
 
-    if( gtk_tree_selection_get_selected( selection, &model, &iter ) )	//set model and iter
-    {
-        //get the selected contact's name and load it's chat history into the message_view
-        gtk_tree_model_get( model, &iter, 0, &contact_name, -1 );
-        load_file( "history", contact_name, &history );
-        if( history )
-        {
-        	show_message_history( history );
-        	free(history);
-        }
+	selection = gtk_tree_view_get_selection(treeview);
 
-        /*if connected, send the server a /unwho command and a /who command to specify who we're talking to*/
-        if( channel_not_null() )
-        {
-            char *command = NULL;
+	if( gtk_tree_selection_get_selected( selection, &model, &iter ) )	//set model and iter
+	{
+		/*get the selected contact's name*/
+		gtk_tree_model_get( model, &iter, 0, &contact_name, -1 );
 
-            // /unwho
-            command = calloc( strlen("/unwho") + 1, sizeof(char) );
-            strncpy( command, "/unwho", 7 );
-            write_to_channel( command, NULL );
+		/*save as buddy's name*/
+		set_buddy(contact_name);
 
-            // /who [contact_name]
-            command = realloc( command, sizeof(char) * ( strlen("/who ") + strlen(contact_name) + 1 ) );
-            strncpy( command, "/who ", 6 );
-            strncat( command, contact_name, strlen(contact_name) );
-            write_to_channel( command, NULL );
+		/*load it's chat history into the message_view*/
+		load_file( "history", contact_name, &history );
+		show_message_history(history);	//will clear historyview if history is NULL
+		if(history)
+		{
+			free(history);
+		}
 
-            g_free(contact_name);
-            free(command);
-        }
-    }
+		/*if connected, send the server a /unwho command and a /who command to specify who we're talking to*/
+		if( channel_not_null() )
+		{
+			char *command = NULL;
 
-    return;
+			// /unwho
+			command = calloc( strlen("/unwho") + 1, sizeof(char) );
+			strncpy( command, "/unwho", 7 );
+			write_to_channel( command, NULL );
+
+			// /who [contact_name]
+			command = realloc( command, sizeof(char) * ( strlen("/who ") + strlen(contact_name) + 1 ) );
+			strncpy( command, "/who ", 6 );
+			strncat( command, contact_name, strlen(contact_name) );
+			write_to_channel( command, NULL );
+
+			g_free(contact_name);
+			free(command);
+		}
+	}
+
+	return;
 }
 
 extern gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event, gpointer data )

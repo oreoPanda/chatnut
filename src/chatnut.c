@@ -110,10 +110,9 @@ static void evaluate_incoming(const char *data)
         case BUDDY_IS_SET:
         {
             printf( "(evaluate_incoming)BUDDY_IS_SET\n");
-            /*get buddyname string*/
+            /*get buddyname string TODO now that gui_interaction calls set_buddy() this might not be needed*/
             char *buddyname = NULL;
             strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, username should be free()d
-            handle_buddy_is_set(buddyname);
             free(buddyname);
 
             break;

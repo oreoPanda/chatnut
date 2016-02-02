@@ -49,7 +49,6 @@ static size_t separate_lines( const char *raw, char ***lines )
 	unsigned int position = 0;
 	int line_start = 0;
 	int line_len = 0;
-	int len = strlen(raw);
 
 	if(raw)
 	{

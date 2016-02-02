@@ -6,10 +6,8 @@
 #include <string.h>
 #include <errno.h>
 
-extern void handle_buddy_is_set(char *username)
+extern void handle_buddy_is_set(void)
 {
-    set_buddy(username);
-
     if( input_view_get_enabled() == FALSE )
     {
     	enable_input_view();
