@@ -8,6 +8,8 @@
 #include "file_operations.h"
 #include "user.h"
 
+static size_t separate_lines( const char *raw, char ***lines );
+
 /*loads contacts from file into a GtkListStore*/
 extern GtkListStore *create_contact_list_model(void)
 {
@@ -202,7 +204,7 @@ extern gboolean load_file( const char *dir, const char *name, char **to )
 }
 
 /*received should be TRUE when this is a received message, FALSE if user sent it*/
-extern void append_to_history( const char *message, const char *buddyname, gboolean received )
+extern void append_to_history( const char *message, const char *buddyname, gboolean received )//rename buddyname to filename
 {
     FILE *historyfile = NULL;
     const char *filename = buddyname;
