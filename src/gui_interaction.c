@@ -214,85 +214,56 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
 
 extern gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event, gpointer data )
 {
-    GdkModifierType state;
-    guint keyval;
-    GtkTextBuffer *inputbuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(inputview));
-    GtkTextIter start;
-    GtkTextIter end;
-    gchar *text = NULL;
-    
-    if( data != NULL )
-    {
-        fprintf( stderr, "(input_view_key_pressed_cb): gpointer data is non-NULL but not used.\n" );
-    }
+	guint keyval;
+	GtkTextBuffer *inputbuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(inputview));
+	GtkTextIter start;
+	GtkTextIter end;
+	gchar *text = NULL;
 
-    gdk_event_get_state( event, &state );
-    gdk_event_get_keyval( event, &keyval );		//keyvals from <gdk/gdkkeysyms.h>
+	if( data != NULL )
+	{
+		fprintf( stderr, "(input_view_key_pressed_cb): gpointer data is non-NULL but not used.\n" );
+	}
 
-    switch(state)
-    {
-        case GDK_SHIFT_MASK:
-        {
-            return FALSE;
-        }
-        default:
-        {
-            break;
-        }
-    }
-    switch(keyval)
-    {
-        case GDK_KEY_Return:
-        {
-            /*get text from buffer*/
-            gtk_text_buffer_get_bounds( inputbuffer, &start, &end );
-            text = gtk_text_buffer_get_text( inputbuffer, &start, &end, FALSE );//TODO with hidden chars FALSE, embedded images won't copy
+	gdk_event_get_keyval( event, &keyval );		//keyvals from <gdk/gdkkeysyms.h>
 
-            /*send textstring to server*/
-            write_to_channel( text, get_username() );
+	switch(keyval)
+	{
+		case GDK_KEY_Return:
+		{
+			/*get text from buffer*/
+			gtk_text_buffer_get_bounds( inputbuffer, &start, &end );
+			text = gtk_text_buffer_get_text( inputbuffer, &start, &end, FALSE );//TODO with hidden chars FALSE, embedded images won't copy
 
-            /*append textstring to history and maybe to historyview*/
-            append_to_history( text, get_buddy(), FALSE );
-            append_to_history_view( text, get_username() );
+			/*send textstring to server*/
+			write_to_channel( text, get_username() );
 
-            /*free text, since it is a non-const string returned from a gtk function*/
-            g_free(text);
-        }
-    }
+			/*append textstring to history and maybe to historyview*/
+			append_to_history( text, get_buddy(), FALSE );
+			append_to_history_view( text, get_username() );
 
-    return FALSE;    //FALSE means event needs further handling, if TRUE then the typed letter would not appear in input_view
+			/*free text, since it is a non-const string returned from a gtk function*/
+			g_free(text);
+
+			/*connect handle when key is released TODO have this disconnect again too!*/
+			g_signal_connect( inputview, "key-release-event", G_CALLBACK(input_view_key_released_cb), NULL );
+		}
+	}
+
+	return FALSE;    //FALSE means event needs further handling, if TRUE then the typed letter would not appear in input_view
 }
 
 extern gboolean input_view_key_released_cb( GtkWidget *inputview, GdkEvent *event, gpointer data )
 {
-    GdkModifierType state;
-    guint keyval;
-    
-    if( inputview && event && !data )
-    {
-        gdk_event_get_state( event, &state );
-        gdk_event_get_keyval( event, &keyval );		//keyvals from <gdk/gdkkeysyms.h>
+	if( inputview && event && !data )
+	{
+		/*clear inputview*/
+		clear_input_view();
+	}
+	else
+	{
+		fprintf( stderr, "(input_view_key_released_cb) ERROR: Received wrong parameters...\n" );
+	}
 
-        switch(state)
-        {
-            case GDK_SHIFT_MASK:
-            {
-                return FALSE;
-            }
-            default:
-            {
-                break;
-            }
-        }
-        switch(keyval)
-        {
-            case GDK_KEY_Return:
-            {
-                /*clear inputview*/
-                clear_input_view();
-            }
-        }
-    }
-    
-    return TRUE;    //event will not be handled further, let's see what happens :D
+	return TRUE;    //tODO check what's needed
 }

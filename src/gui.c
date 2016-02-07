@@ -235,7 +235,6 @@ extern void enable_input_view(void)
 
         //TODO make sure this is disconnected when input view is disabled
         g_signal_connect( input_view, "key-press-event", G_CALLBACK(input_view_key_pressed_cb), NULL );
-        g_signal_connect( input_view, "key-release-event", G_CALLBACK(input_view_key_released_cb), NULL );
 
         input_view_enabled = TRUE;
 
