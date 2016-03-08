@@ -20,4 +20,7 @@ nbproject/
 
 # gedit backup files
 *~
-/Release/
+
+# Dolphin .directory files
+.directory
+src/.directory

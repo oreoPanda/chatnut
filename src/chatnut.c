@@ -29,9 +29,8 @@ typedef enum reply commandreply;
 
 enum reply
 {
-    CONNECTED = 48,
+    CONNECTED = 32,
     HELP,
-    LIST,
     BUDDY_IS_SET,
     BUDDY_IS_UNSET,
     BUDDY_NOT_EXIST,
@@ -88,108 +87,105 @@ static void create_gui(void)
 }
 
 static void evaluate_incoming(const char *data)
-{
-    commandreply indicator = *data;
-    const char *message = data+1;
+	{
+	commandreply indicator = *data;
+	const char *message = data+1;
 
-    g_print("(evaluate_incoming)Evaluating incoming message.\n");
+	g_print("(evaluate_incoming)Evaluating incoming message.\n");
 
-    switch(indicator)
-    {
-        case CONNECTED:
-        {
-            printf( "(evaluate_incoming)Connected\n");
+	switch(indicator)
+	{
+		case CONNECTED:
+		{
+			printf( "(evaluate_incoming)Connected\n");
 
-            g_idle_add( popup_login, NULL );
-            break;
-        }
-        case LOGIN_FAILURE:
-        {
-            printf( "(evaluate_incoming)Login failure\n");
+			g_idle_add( popup_login, NULL );
+			break;
+		}
+		case LOGIN_FAILURE:
+		{
+			printf( "(evaluate_incoming)Login failure\n");
 
-            g_idle_add( popup_login, NULL );
-            break;
-        }
-        case LOGIN_SUCCESS:
-        {
-            printf( "(evaluate_incoming)Login success\n");
+			g_idle_add( popup_login, NULL );
+			break;
+		}
+		case LOGIN_SUCCESS:
+		{
+			printf( "(evaluate_incoming)Login success\n");
 
-            /*get buddyname string*/
-            char *buddyname = NULL;
-            strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, username should be free()d
-            handle_login_success(buddyname);
-            free(buddyname);
+			/*get buddyname string*/
+			char *buddyname = NULL;
+			strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, username should be free()d
+			handle_login_success(buddyname);
+			free(buddyname);
 
-            break;
-        }
-        case BUDDY_IS_SET:
-        {
-            printf( "(evaluate_incoming)BUDDY_IS_SET\n");
-            /*get buddyname string TODO now that gui_interaction calls set_buddy() this might not be needed*/
-            char *buddyname = NULL;
-            strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, username should be free()d
-            free(buddyname);
+			break;
+		}
+		case BUDDY_IS_SET:
+		{
+			printf( "(evaluate_incoming)BUDDY_IS_SET\n");
+			enable_input_view();
 
-            break;
-        }
-        case BUDDY_IS_UNSET:
-        {
-            printf( "(evaluate_incoming)BUDDY_IS_UNSET\n");
+			break;
+		}
+		case BUDDY_IS_UNSET:
+		{
+			printf( "(evaluate_incoming)BUDDY_IS_UNSET\n");
 
-            break;
-        }
-        case BUDDY_NOT_EXIST:
-        {
-            printf( "(evaluate_incoming)BUDDY_NOT_EXIST\n");
+			break;
+		}
+		case BUDDY_NOT_EXIST:
+		{
+			printf( "(evaluate_incoming)BUDDY_NOT_EXIST\n");
 
-            break;
-        }
-        case LOOKUP_FAILURE:
-        {
-            printf( "(evaluate_incoming)Lookup failure\n");
-            break;
-        }
-        /*process of choosing buddy works, code analysis needs to be done TODO*/
-        case LOOKUP_SUCCESS:
-        {
-            printf( "(evaluate_incoming)Lookup success\n");
-            /*get buddyname string*/
-            char *buddyname = NULL;
-            strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, buddyname should be free()d
-            handle_lookup_success( buddyname );
-            free(buddyname);
-            
-            break;
-        }
-        case MESSAGE:
-        {
-            /*get buddyname string and a pointer to the actual message part of message*/
-            char *buddy_username = NULL;
-            const char *raw_message = strip_buddyname( message, &buddy_username );//raw_message should not be freed, username should be
+			break;
+		}
+		case LOOKUP_FAILURE:
+		{
+			printf( "(evaluate_incoming)Lookup failure\n");
+			break;
+		}
+		/*process of choosing buddy works, code analysis needs to be done TODO*/
+		case LOOKUP_SUCCESS:
+		{
+			printf( "(evaluate_incoming)Lookup success\n");
+			/*get buddyname string*/
+			char *buddyname = NULL;
+			strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, buddyname should be free()d
+			handle_lookup_success( buddyname );
+			free(buddyname);
 
-            //TODO I got up to here checking the process of an incoming message, continue checking below this line
+			break;
+		}
+		case MESSAGE:
+		{
+			/*get buddyname string and a pointer to the actual message part of message*/
+			char *buddy_username = NULL;
+			const char *raw_message = strip_buddyname( message, &buddy_username );//raw_message should not be freed, username should be
 
-            /*append the actual message to history*/
-            append_to_history( raw_message, buddy_username, TRUE );
-            if( get_buddy() )//TODO make sure get_buddy is ALWAYS (no matter whether or not buddy is online) the currently selected one
-            {
+			//TODO I got up to here checking the process of an incoming message, continue checking below this line
+
+			/*append the actual message to history*/
+			append_to_history( raw_message, buddy_username, TRUE );
+			if( get_buddy() )//TODO make sure get_buddy is ALWAYS (no matter whether or not buddy is online) the currently selected one
+			{
 				if( strcmp( get_buddy(), buddy_username ) == 0 )
 				{
 					append_to_history_view( raw_message, buddy_username );
 				}
-            }
+			}
 
-            free(buddy_username);
+			free(buddy_username);
 
-            break;
-        }
-        default:
-        {
-            g_print( "(evaluate_incoming)Unknown command reply %d\n", indicator );
-            g_print( "(evaluate_incoming)Might be message %s\n", message );
-            break;
-        }
-    }
+			break;
+		}
+		default:
+		{
+			g_print( "(evaluate_incoming)Unknown command reply %d\n", indicator );
+			g_print( "(evaluate_incoming)Might be message %s\n", message );
+			break;
+		}
+	}
 }
 
 /*alright let's not forget the main function :D*/
