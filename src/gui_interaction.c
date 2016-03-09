@@ -204,9 +204,15 @@ extern gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event
 	GtkTextIter end;
 	gchar *text = NULL;
 
-	if( data != NULL )
+	/*check that a key-press-event is connected*/
+	if(event->type != GDK_KEY_PRESS)
 	{
-		fprintf( stderr, "(input_view_key_pressed_cb): gpointer data is non-NULL but not used.\n" );
+		fprintf(stderr, "[Key press handle] Error: The connected event is not of type GDK_KEY_PRESS.\n");
+	}
+
+	if(data)
+	{
+		fprintf(stderr, "[Key press handle] Warning: Data set but not used.\n");
 	}
 
 	gdk_event_get_keyval( event, &keyval );		//keyvals from <gdk/gdkkeysyms.h>
@@ -229,25 +235,14 @@ extern gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event
 			/*free text, since it is a non-const string returned from a gtk function*/
 			g_free(text);
 
-			/*connect handle when key is released TODO have this disconnect again too!*/
-			g_signal_connect( inputview, "key-release-event", G_CALLBACK(input_view_key_released_cb), NULL );
+			/*clear inputview*/
+			clear_input_view();
+
+			return TRUE;    //do not propagate event further (otherwise newline would show up in input view)
+		}
+		default:
+		{
+			return FALSE;	//propagate event further, so that characters show up in input view
 		}
 	}
-
-	return FALSE;    //FALSE means event needs further handling, if TRUE then the typed letter would not appear in input_view TODO compare with below
-}
-
-extern gboolean input_view_key_released_cb( GtkWidget *inputview, GdkEvent *event, gpointer data )
-{
-	if( inputview && event && !data )
-	{
-		/*clear inputview*/
-		clear_input_view();
-	}
-	else
-	{
-		fprintf( stderr, "(input_view_key_released_cb) ERROR: Received wrong parameters...\n" );
-	}
-
-	return FALSE;    //with TRUE, the key-release-event signal doesn't get disconnected and input_view is cleared every next time a key is released
 }

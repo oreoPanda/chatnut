@@ -162,7 +162,7 @@ static void evaluate_incoming(const char *data)
 			const char *raw_message = strip_buddyname( message, &buddy_username );//raw_message should not be freed, username should be
 
 			//TODO I got up to here checking the process of an incoming message, continue checking below this line
-			printf("[Message] %s\n", message);
+			printf("[Message from %s] %s\n", buddy_username, raw_message);
 
 			/*append the actual message to history*/
 			append_to_history( raw_message, buddy_username, TRUE );

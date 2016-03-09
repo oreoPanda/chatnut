@@ -29,6 +29,7 @@ extern void create_input_scrollbox(void);
 extern void create_input_view(void);
 extern gboolean input_view_get_enabled(void);
 extern void enable_input_view(void);
+extern void disable_input_view(void);
 extern void clear_input_view(void);
 extern void show_message_history( const char *history );
 extern void append_to_history_view( const char *buffer, const char *sender );

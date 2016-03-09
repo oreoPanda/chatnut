@@ -36,6 +36,7 @@ GtkWidget *dialog_add_contact = NULL,
                 *dialog_login = NULL;
 
 gboolean input_view_enabled = FALSE;
+gulong input_view_key_press_handler_id = 0;
 gboolean contains_label = FALSE;
 
 //TODO the destroy signal needs to call a quit function, the quit function needs to shutdown the GIOChannel and call gtk_main_quit
@@ -230,15 +231,27 @@ extern gboolean input_view_get_enabled(void)
 
 extern void enable_input_view(void)
 {
-        gtk_text_view_set_editable( GTK_TEXT_VIEW(input_view), TRUE );
-        gtk_text_view_set_cursor_visible( GTK_TEXT_VIEW(input_view), TRUE );
+	gtk_text_view_set_editable( GTK_TEXT_VIEW(input_view), TRUE );
+	gtk_text_view_set_cursor_visible( GTK_TEXT_VIEW(input_view), TRUE );
 
-        //TODO make sure this is disconnected when input view is disabled
-        g_signal_connect( input_view, "key-press-event", G_CALLBACK(input_view_key_pressed_cb), NULL );
+	/*connect key-press-event signal to my function before default gtk handlers kick in*/
+	input_view_key_press_handler_id = g_signal_connect( input_view, "key-press-event", G_CALLBACK(input_view_key_pressed_cb), NULL );
 
-        input_view_enabled = TRUE;
+	input_view_enabled = TRUE;
 
-        return;
+	return;
+}
+
+extern void disable_input_view(void)
+{
+	/*set it so that user can't type into it*/
+	gtk_text_view_set_editable( GTK_TEXT_VIEW(input_view), FALSE );
+	gtk_text_view_set_cursor_visible( GTK_TEXT_VIEW(input_view), FALSE );
+
+	/*disconnect key-press-event signal*/
+	g_signal_handler_disconnect(input_view, input_view_key_press_handler_id);
+
+	input_view_enabled = FALSE;
 }
 
 extern void clear_input_view(void)
