@@ -79,14 +79,14 @@ extern int connect_socket(socket_t *sock, char *server_addr, unsigned short port
 	else
 	{
 		//say who the client is connected to
-		printf( "(connect_socket)Connected to server with address %s\n", inet_ntoa(server.sin_addr) );
+		printf( "[Connection] Connected to server with address %s\n", inet_ntoa(server.sin_addr) );
 		return TRUE;
 	}
 }
 
 extern void close_socket( socket_t *sock )
 {
-	printf( "Trying to close socket %d\n", *sock );
+	printf( "[Connection] Closing socket %d\n", *sock );
 	if( close(*sock) < 0 )
 	{
 		fprintf( stderr, "Error closing socket!: %s\n", strerror(errno) );

@@ -67,7 +67,7 @@ static void create_channel(int fd)
         fprintf( stderr, "%s\n", error->message );
     }
 
-    printf( "(create_channel)Created a GIOChannel\n" );
+    printf( "[Connection] Created a GIOChannel\n" );
 
     return;
 }
@@ -80,8 +80,6 @@ extern gboolean read_line_from_channel(char **line)
 	gsize line_terminator_pos = NULL;	//position of '\n' will go here (both gsizes will be NULL if no data read)
 	GError *error = NULL;
 	gboolean return_value = SUCCESS;
-
-	printf("(read_line_from_channel)will read line\n");
 
 	while( (status = g_io_channel_read_line( channel, line, &length, &line_terminator_pos, &error )) == G_IO_STATUS_AGAIN )
 	{
@@ -96,7 +94,6 @@ extern gboolean read_line_from_channel(char **line)
 		}
 		case G_IO_STATUS_NORMAL:
 		{
-			printf( "(read_line_from_channel)Line was read: %s\n", *line );
 			break;
 		}
 		case G_IO_STATUS_EOF:
@@ -107,7 +104,7 @@ extern gboolean read_line_from_channel(char **line)
 		}
 		default:
 		{
-			fprintf( stderr, "Unknown return value\n" );
+			fprintf( stderr, "[Connection] Unknown return value while reading from GIOChannel\n" );
 			break;
 		}
 	}
@@ -180,28 +177,27 @@ extern void write_to_channel( const char *message, const char *username )
 	{
 		case G_IO_STATUS_ERROR:
 		{
-			fprintf( stderr, "Error writing to stdout via a GIOChannel.\n" );
+			fprintf( stderr, "Error writing to a GIOChannel.\n" );
 			break;
 		}
 		case G_IO_STATUS_NORMAL:
 		{
-			printf( "(write_to_channel)Normal return value writing \"%s\" to channel.\n", data );
 			break;
 		}
 		case G_IO_STATUS_EOF:
 		{
-			fprintf( stderr, "Reached end of file while writing to stdout via a GIOChannel.\n" );
+			fprintf( stderr, "Reached end of file while writing to a GIOChannel.\n" );
 			break;
 		}
 		default:
 		{
-			fprintf( stderr, "Unknown return value\n" );
+			fprintf( stderr, "Unknown return value while writing to a GIOChannel\n" );
 			break;
 		}
 	}
 	if( bytes_written < (gsize)length_of_data )
 	{
-		fprintf( stderr, "(write_to_channel)Not all bytes were written.\n" );
+		fprintf( stderr, "[Connection] Not all bytes were written to GIOChannel\n" );
 	}
 	if(error)
 	{
@@ -221,7 +217,7 @@ extern void write_to_channel( const char *message, const char *username )
 	{
 		case G_IO_STATUS_ERROR:
 		{
-			fprintf( stderr, "(write_to_channel)Error flushing stdout via a GIOChannel.\n" );
+			fprintf( stderr, "(write_to_channel)Error flushing GIOChannel.\n" );
 			break;
 		}
 		case G_IO_STATUS_NORMAL:
@@ -230,7 +226,7 @@ extern void write_to_channel( const char *message, const char *username )
 		}
 		default:
 		{
-			fprintf( stderr, "Unknown return value\n" );
+			fprintf( stderr, "Unknown return value flushing GIOChannel\n" );
 			break;
 		}
 	}
@@ -250,12 +246,12 @@ static void shutdown_channel(void)
 	GError *error = NULL;
 
 	while( (status = g_io_channel_shutdown( channel, flush, &error )) == G_IO_STATUS_AGAIN );
-	printf( "channel->ref_count after shutdown = %i\n", channel->ref_count );
+	//printf( "channel->ref_count after shutdown = %i\n", channel->ref_count );
 	switch(status)
 	{
 		case G_IO_STATUS_NORMAL:
 		{
-			printf( "Shutdown of GIOChannel successful.\n" );
+			printf( "[Connection] Shutdown of GIOChannel successful.\n" );
 			break;
 		}
 		case G_IO_STATUS_EOF:
@@ -321,7 +317,7 @@ static gboolean channel_in_handle( GIOChannel *source, GIOCondition condition, g
     }
     else
     {
-        fprintf( stderr, "(channel_in_handle) Warning The passed channel doesn't match the global channel." );
+        fprintf( stderr, "[Connection] Warning The passed channel doesn't match the global channel." );
         return G_SOURCE_REMOVE;
     }
 }

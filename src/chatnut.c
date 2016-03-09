@@ -91,27 +91,25 @@ static void evaluate_incoming(const char *data)
 	commandreply indicator = *data;
 	const char *message = data+1;
 
-	g_print("(evaluate_incoming)Evaluating incoming message.\n");
-
 	switch(indicator)
 	{
 		case CONNECTED:
 		{
-			printf( "(evaluate_incoming)Connected\n");
+			printf( "[Server reply] Connected\n");
 
 			g_idle_add( popup_login, NULL );
 			break;
 		}
 		case LOGIN_FAILURE:
 		{
-			printf( "(evaluate_incoming)Login failure\n");
+			printf( "[Server reply] Login failure\n");
 
 			g_idle_add( popup_login, NULL );
 			break;
 		}
 		case LOGIN_SUCCESS:
 		{
-			printf( "(evaluate_incoming)Login success\n");
+			printf( "[Server reply] Login success\n");
 
 			/*get buddyname string*/
 			char *buddyname = NULL;
@@ -123,32 +121,32 @@ static void evaluate_incoming(const char *data)
 		}
 		case BUDDY_IS_SET:
 		{
-			printf( "(evaluate_incoming)BUDDY_IS_SET\n");
+			printf( "[Server reply] Buddy is now set\n");
 			enable_input_view();
 
 			break;
 		}
 		case BUDDY_IS_UNSET:
 		{
-			printf( "(evaluate_incoming)BUDDY_IS_UNSET\n");
+			printf( "[Server reply] Buddy is now unset\n");
 
 			break;
 		}
-		case BUDDY_NOT_EXIST:
+		case BUDDY_NOT_EXIST:		//TODO could maybe take out this one
 		{
-			printf( "(evaluate_incoming)BUDDY_NOT_EXIST\n");
+			printf( "[Server reply] Buddy does not exist\n");
 
 			break;
 		}
 		case LOOKUP_FAILURE:
 		{
-			printf( "(evaluate_incoming)Lookup failure\n");
+			printf( "[Server reply] User does not exist\n");
 			break;
 		}
 		/*process of choosing buddy works, code analysis needs to be done TODO*/
 		case LOOKUP_SUCCESS:
 		{
-			printf( "(evaluate_incoming)Lookup success\n");
+			printf( "[Server reply] User exists\n");
 			/*get buddyname string*/
 			char *buddyname = NULL;
 			strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, buddyname should be free()d
@@ -164,6 +162,7 @@ static void evaluate_incoming(const char *data)
 			const char *raw_message = strip_buddyname( message, &buddy_username );//raw_message should not be freed, username should be
 
 			//TODO I got up to here checking the process of an incoming message, continue checking below this line
+			printf("[Message] %s\n", message);
 
 			/*append the actual message to history*/
 			append_to_history( raw_message, buddy_username, TRUE );
@@ -173,6 +172,7 @@ static void evaluate_incoming(const char *data)
 				{
 					append_to_history_view( raw_message, buddy_username );
 				}
+				//somehow notify the user about the new message
 			}
 
 			free(buddy_username);
@@ -181,8 +181,7 @@ static void evaluate_incoming(const char *data)
 		}
 		default:
 		{
-			g_print( "(evaluate_incoming)Unknown command reply %d\n", indicator );
-			g_print( "(evaluate_incoming)Might be message %s\n", message );
+			printf("[Unknown server reply]\n");
 			break;
 		}
 	}

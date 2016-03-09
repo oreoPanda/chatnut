@@ -98,14 +98,6 @@ extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
         l = l->next;
         password_entry = l->data;
         l = l->next;
-        if( l )
-        {
-            printf("(login) List is non-NULL.\n");
-        }
-        else
-        {
-            printf("(login) list is NULL.\n");
-        }
         
         /*get buffers from the two GtkEntries*/
         usernamebuffer = gtk_entry_get_buffer(GTK_ENTRY(username_entry));
@@ -159,15 +151,7 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
 
 	if( data != NULL )
 	{
-		fprintf( stderr, "(contact_selection_handler): GtkTreeViewColumn column is non-NULL but not used.\n" );
-	}
-	if( column )
-	{
-		fprintf( stdout, "(contact_selection_handler): GtkTreeViewColumn column is non-NULL but not used.\n" );
-	}
-	if( treepath )
-	{
-		fprintf( stdout, "(contact_selection_handler): GtkTreePath treepath is non-NULL but not used.\n" );
+		fprintf( stderr, "(contact_selection_handler): gpointer data is non-NULL but not used.\n" );
 	}
 
 	selection = gtk_tree_view_get_selection(treeview);
@@ -250,7 +234,7 @@ extern gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event
 		}
 	}
 
-	return FALSE;    //FALSE means event needs further handling, if TRUE then the typed letter would not appear in input_view
+	return FALSE;    //FALSE means event needs further handling, if TRUE then the typed letter would not appear in input_view TODO compare with below
 }
 
 extern gboolean input_view_key_released_cb( GtkWidget *inputview, GdkEvent *event, gpointer data )
@@ -265,5 +249,5 @@ extern gboolean input_view_key_released_cb( GtkWidget *inputview, GdkEvent *even
 		fprintf( stderr, "(input_view_key_released_cb) ERROR: Received wrong parameters...\n" );
 	}
 
-	return TRUE;    //tODO check what's needed
+	return FALSE;    //with TRUE, the key-release-event signal doesn't get disconnected and input_view is cleared every next time a key is released
 }

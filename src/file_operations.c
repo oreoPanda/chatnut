@@ -154,7 +154,7 @@ extern gboolean add_contact_to_list(const char *contact)
 	}
 	else
 	{
-		fprintf( stderr, "Contact exists!\n" );
+		fprintf( stderr, "[Contacts] Contact exists!\n" );
 		return FALSE;
 	}
 }

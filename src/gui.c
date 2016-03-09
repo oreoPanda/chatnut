@@ -402,6 +402,8 @@ extern gboolean popup_login(gpointer data)
     
     /*dialog*/
     dialog_login = gtk_dialog_new();
+    gtk_window_set_transient_for(GTK_WINDOW(dialog_login), GTK_WINDOW(window) );
+    //gtk_window_set_attached_to(GTK_WINDOW(dialog_login), window );
     dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_login));
     gtk_widget_show(dialog_login);
 
@@ -448,6 +450,7 @@ extern gboolean popup_add_contact( GtkButton *button, gpointer data )
     {
         /*dialog*/
         dialog_add_contact = gtk_dialog_new();
+        gtk_window_set_transient_for(GTK_WINDOW(dialog_add_contact), GTK_WINDOW(window) );
         dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_add_contact));
 
         /*entry*/
