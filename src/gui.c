@@ -62,10 +62,20 @@ extern void create_window(void)
 extern void update_window_title(void)
 {
 	char *username = get_username();
-	char *title = calloc(strlen(username) + 3 + strlen("Chatnut") + 1, sizeof(char) );
-	strncpy(title, username, strlen(username)+1);
-	strncat(title, " - ", 3);
-	strncat(title, "Chatnut", 7);
+	char *title = NULL;
+
+	if(username)
+	{
+		title = calloc(strlen(username) + 3 + strlen("Chatnut") + 1, sizeof(char) );
+		strncpy(title, username, strlen(username)+1);
+		strncat(title, " - ", 3);
+		strncat(title, "Chatnut", 7);
+	}
+	else
+	{
+		title = calloc(strlen("Chatnut") + 1, sizeof(char) );
+		strncpy(title, "Chatnut", 8);
+	}
 
 	gtk_window_set_title(GTK_WINDOW(window), title);
 
