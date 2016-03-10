@@ -21,6 +21,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <gtk/gtk.h>
 
 extern void create_window(void);
+extern void update_window_title(void);
 extern void create_main_pane(void);
 extern void create_left_pane(void);
 extern void create_history_scrollbox(void);

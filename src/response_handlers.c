@@ -64,6 +64,9 @@ extern void handle_login_success(const char *username)
         fprintf( stderr, "Error initializing the users directory and files in $HOME/.chatnut. Did the permissions change?\n" );
     }
 
+    /*update window title*/
+    update_window_title();
+
     /*load and show contacts*/
 	destroy_label();
 	GtkListStore *model = create_contact_list_model();

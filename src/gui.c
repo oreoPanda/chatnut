@@ -17,6 +17,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "gui.h"
 #include "gui_interaction.h"
+#include "user.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -56,6 +57,19 @@ extern void create_window(void)
     gtk_widget_show(window);
 
     return;
+}
+
+extern void update_window_title(void)
+{
+	char *username = get_username();
+	char *title = calloc(strlen(username) + 3 + strlen("Chatnut") + 1, sizeof(char) );
+	strncpy(title, username, strlen(username)+1);
+	strncat(title, " - ", 3);
+	strncat(title, "Chatnut", 7);
+
+	gtk_window_set_title(GTK_WINDOW(window), title);
+
+	return;
 }
 
 extern void create_main_pane(void)
