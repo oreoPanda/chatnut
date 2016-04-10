@@ -59,6 +59,7 @@ extern void handle_login_success(const char *username)
     /*set the username that user logged in with*/
     set_username(username);
 
+    /*initialize the users directory*/
     if( init_user_directory() != 0 )
     {
         fprintf( stderr, "Error initializing the users directory and files in $HOME/.chatnut. Did the permissions change?\n" );
