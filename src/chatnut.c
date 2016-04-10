@@ -87,7 +87,7 @@ static void create_gui(void)
 }
 
 static void evaluate_incoming(const char *data)
-	{
+{
 	commandreply indicator = *data;
 	const char *message = data+1;
 

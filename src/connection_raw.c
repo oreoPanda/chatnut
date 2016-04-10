@@ -20,6 +20,24 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #define TRUE 1
 #define FALSE 0
 
+/*initialize winsock*/
+extern int init_winsock(void)
+{
+	WORD version;
+	WSADATA winsockdata;
+
+	version = MAKEWORD(1, 1);
+	if(WSAStartup(version, &data) != 0)
+	{
+		print_error("Error initializing winsock");	//TODO winsock error message/function
+		return FALSE;
+	}
+	else
+	{
+		return TRUE;
+	}
+}
+
 /*create a socket*/
 extern int create_socket(void)
 {
