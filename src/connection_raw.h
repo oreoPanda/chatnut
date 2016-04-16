@@ -31,6 +31,8 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #define socket_t int
 
+
+/*TODO switch to winsock*/
 extern int create_socket(void);
 extern int connect_socket( socket_t *sock, char *server_addr, unsigned short port );
 extern void close_socket( socket_t *sock );

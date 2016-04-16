@@ -20,6 +20,8 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #define TRUE 1
 #define FALSE 0
 
+/*TODO *why is there no winsock initialzation here?*/
+
 /*create a socket*/
 extern int create_socket(void)
 {
