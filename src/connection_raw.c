@@ -37,7 +37,7 @@ extern int winsock_init(void)
 	}
 }
 
-/*initialize winsock and create a socket*/
+/*create a socket*/
 extern int create_socket(void)
 {
 	socket_t sock;

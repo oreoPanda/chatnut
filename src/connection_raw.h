@@ -33,6 +33,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #define socket_t int
 
+
 extern int winsock_init(void);
 extern int create_socket(void);
 extern int connect_socket( socket_t *sock, char *server_addr, unsigned short port );
