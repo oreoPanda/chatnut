@@ -50,6 +50,9 @@ extern int create_socket(void)
 	}
 
 	setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, &y, sizeof(int) );//SO_REUSEADDR makes the socket not be unusable for two minutes after server closes
+	//set to non-blocking
+	unsigned long mode = 1;
+	ioctlsocket(sock, FIONBIO, &mode);
 
 	return sock;
 }
@@ -88,17 +91,19 @@ extern int connect_socket(socket_t *sock, char *server_addr, unsigned short port
 	server.sin_port = htons(port);
 
 	/*connect to server and check if connecting worked*/
-	if( connect( *sock, (struct sockaddr*)&server, sizeof(server) ) < 0)
-	{
-		print_error("Error connecting to server");
-		return FALSE;
-	}
-	else
+	int errcode = connect( *sock, (struct sockaddr*)&server, sizeof(server) );
+	if(errcode == 0)//TODO is this the value for success?
 	{
 		//say who the client is connected to
 		printf( "[Connection] Connected to server with address %s\n", inet_ntoa(server.sin_addr) );
 		return TRUE;
 	}
+	else if(errcode != WSAEWOULDBLOCK)
+	{
+		print_error("Error connecting to server");
+		return FALSE;
+	}
+	
 }
 
 extern void close_socket( socket_t *sock )
