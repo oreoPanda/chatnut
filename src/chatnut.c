@@ -17,8 +17,10 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <stdlib.h>
 #include <string.h>
+#include <winsock.h>	//for WSACleanup();	TODO move to connection_raw.h?
 
 #include "connection.h"
+#include "connection_raw.h"	//for winsock_init()
 #include "gui.h"
 #include "gui_interaction.h"
 #include "response_handlers.h"
@@ -43,7 +45,7 @@ enum reply
     MESSAGE,
     NOARG,
     NOMEM,
-    ERROR
+    ERrOR
 };
 
 //TODO check if strncpy and strncat return values matter for moved strings
@@ -87,7 +89,7 @@ static void create_gui(void)
 }
 
 static void evaluate_incoming(const char *data)
-	{
+{
 	commandreply indicator = *data;
 	const char *message = data+1;
 
@@ -192,13 +194,20 @@ static void evaluate_incoming(const char *data)
 int main( int argc, char *argv[] )
 {
     gtk_init( &argc, &argv );
-    g_idle_add( watch_connection, evaluate_incoming );
+	if(!winsock_init() )
+	{
+		fprintf( stderr, "Error initializing winsock\n" );
+		return EXIT_FAILURE;
+	}
+    g_timeout_add_seconds( 3, watch_connection, evaluate_incoming );
     if( init_chatnut_directory() != 0 )
     {
-        fprintf( stderr, "Error initializing directory .chatnut in $HOME. Make sure this process is allowed to create directories in $HOME.\n" );
         return EXIT_FAILURE;
     }
     create_gui();
     gtk_main();
+
+    //Clean up winsock
+    WSACleanup();
     return EXIT_SUCCESS;
 }

@@ -17,14 +17,31 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "connection_raw.h"
 
-#define TRUE 1
 #define FALSE 0
+#define TRUE 1
 
-/*create a socket*/
+/*initialize winsock*/
+extern int winsock_init(void)
+{
+	WORD version;
+	WSADATA winsock_data;
+
+	version = MAKEWORD(1, 1);
+	if( WSAStartup(version, &winsock_data) != 0 )
+	{
+		return FALSE;	//TODO winsock error message
+	}
+	else
+	{
+		return TRUE;
+	}
+}
+
+/*initialize winsock and create a socket*/
 extern int create_socket(void)
 {
 	socket_t sock;
-	const int y = 1;
+	const char y = 1;
 
 	sock = socket( PF_INET, SOCK_STREAM, 0 );
 	if( sock < 0 )		//check if it worked

@@ -20,6 +20,8 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <string.h>
 #include <sys/stat.h>	//for mkdir()
 
+/*WARNING: MinGW's mkdir() function doesn't take access rights as second parameter*/
+
 #include "file_operations.h"
 #include "user.h"
 
@@ -260,12 +262,17 @@ extern void append_to_history( const char *message, const char *buddyname, gbool
 
 extern int init_chatnut_directory(void)
 {
-    if( chdir(getenv("HOME")) != 0 )
+    if( chdir(getenv("HOMEDRIVE")) != 0 )
+    {
+        fprintf( stderr, "Error switching to your home drive: %s\n", strerror(errno) );
+        return 1;
+    }
+    if( chdir(getenv("HOMEPATH")) != 0 )
     {
         fprintf( stderr, "Error switching into your home directory: %s\n", strerror(errno) );
         return 1;
     }
-    if( mkdir( ".chatnut", 0755 ) != 0 )
+    if( mkdir( ".chatnut") != 0 )
     {
         if( errno != EEXIST )
         {
@@ -284,7 +291,7 @@ extern int init_chatnut_directory(void)
 extern int init_user_directory(void)
 {
     /*directories*/
-    if( mkdir( get_username(), 0755 ) != 0 )
+    if( mkdir( get_username()) != 0 )
     {
         if( errno != EEXIST )
         {
@@ -297,7 +304,7 @@ extern int init_user_directory(void)
         fprintf( stderr, "Error switching into user's directory in $HOME/.chatnut: %s\n", strerror(errno) );
         return 1;
     }
-    if( mkdir( "history", 0755 ) != 0 )
+    if( mkdir( "history") != 0 )
     {
         if( errno != EEXIST )
         {

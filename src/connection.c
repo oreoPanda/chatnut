@@ -350,5 +350,5 @@ extern gboolean watch_connection(gpointer eval_func)
         }
     }
 
-    return G_SOURCE_CONTINUE;   //this callback should not be removed
+    return G_SOURCE_CONTINUE;   //this callback should not be removed <-- wrong comment TODO
 }

@@ -19,18 +19,21 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #define	CONNECTION_RAW_H_
 
 #include <errno.h>
-#include <fcntl.h>
-#include <netinet/in.h>
+//#include <fcntl.h>
+//#include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+//#include <sys/select.h>
+//#include <sys/socket.h>
+//#include <unistd.h>
+//#include <arpa/inet.h>
+//#include <netdb.h>
+#include <winsock.h>
+#include <io.h>
 
 #define socket_t int
 
+extern int winsock_init(void);
 extern int create_socket(void);
 extern int connect_socket( socket_t *sock, char *server_addr, unsigned short port );
 extern void close_socket( socket_t *sock );

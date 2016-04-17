@@ -1,9 +1,13 @@
 # Object files
 *.o
 
-# Executable
+# Executables
 src/chatnut
 src/chatnut-debug
+
+# Windows executables
+src/chatnut.exe
+src/chatnut-debug.exe
 
 # NetBeans data folder
 data/
