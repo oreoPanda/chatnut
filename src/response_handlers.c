@@ -21,7 +21,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <string.h>
 #include <errno.h>
 
-gboolean was_logged_in = true;
+gboolean was_logged_in = FALSE;
 
 extern void handle_buddy_is_set(void)
 {
@@ -56,7 +56,7 @@ extern void handle_lookup_success(const char *contact)
 extern void handle_login_success(const char *username)
 {
     /*connect the "Add Contact" button to its handler*/
-    	enable_add_contact_button();
+    enable_add_contact_button();
     
     /*set the username that user logged in with*/
     set_username(username);
@@ -64,13 +64,16 @@ extern void handle_login_success(const char *username)
     /*check if somebody was logged in previously*/
     if(was_logged_in)
     {
- 				chdir("../");
+	chdir("../");
     }
-    /*initialize the users directory*/
+    /*initialize the users directory TODO this function needs to exit if init_user_dir errors*/
     if( init_user_directory() != 0 )
     {
         fprintf( stderr, "Error initializing the users directory and files in $HOME/.chatnut. Did the permissions change?\n" );
     }
+
+	//set was_logged_in
+	was_logged_in = TRUE;
 
     /*update window title*/
     update_window_title();

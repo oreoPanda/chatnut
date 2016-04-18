@@ -20,6 +20,11 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <gtk/gtk.h>
 
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>	//for mkdir()
+
 extern GtkListStore *create_contact_list_model(void);
 extern gboolean add_contact_to_list(const char *contact);
 extern gboolean load_file( const char *dir, const char *name, char **to );

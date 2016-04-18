@@ -103,6 +103,10 @@ extern int connect_socket(socket_t *sock, char *server_addr, unsigned short port
 		print_error("Error connecting to server");
 		return FALSE;
 	}
+	else
+	{
+		return FALSE;
+	}
 	
 }
 

@@ -15,11 +15,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>	//for mkdir()
-
 /*WARNING: MinGW's mkdir() function doesn't take access rights as second parameter*/
 
 #include "file_operations.h"

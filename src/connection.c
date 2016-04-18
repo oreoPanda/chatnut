@@ -76,8 +76,8 @@ extern gboolean read_line_from_channel(char **line)
 {
 	/*read from the channel*/
 	GIOStatus status;
-	gsize length = NULL;	//the length of read data will go here
-	gsize line_terminator_pos = NULL;	//position of '\n' will go here (both gsizes will be NULL if no data read)
+	gsize length = 0;	//the length of read data will go here
+	gsize line_terminator_pos = 0;	//position of '\n' will go here (both gsizes will be NULL if no data read)
 	GError *error = NULL;
 	gboolean return_value = SUCCESS;
 
