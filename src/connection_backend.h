@@ -1,4 +1,4 @@
-/*connection_raw.h*/
+/*connection_backend.h*/
 
 /*Copyright (C) 2016 Jonas Fuglsang-Petersen*/
 
@@ -15,8 +15,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef CONNECTION_RAW_H_
-#define	CONNECTION_RAW_H_
+#ifndef CONNECTION_BACKEND_H_
+#define	CONNECTION_BACKEND_H_
 
 #include <errno.h>
 //#include <fcntl.h>
@@ -40,4 +40,4 @@ extern int connect_socket( socket_t *sock, char *server_addr, unsigned short por
 extern void close_socket( socket_t *sock );
 extern void print_error(char *message);
 
-#endif	/* CONNECTION_RAW_H_ */
+#endif	/* CONNECTION_BACKEND_H_ */

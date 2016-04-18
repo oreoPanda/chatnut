@@ -1,4 +1,4 @@
-/*connection.c*/
+/*connection_backend.c*/
 
 /*Copyright (C) 2016 Jonas Fuglsang-Petersen*/
 
@@ -112,7 +112,7 @@ extern int connect_socket(socket_t *sock, char *server_addr, unsigned short port
 
 extern void close_socket( socket_t *sock )
 {
-	printf( "[Connection] Closing socket %d\n", *sock );
+	printf( "[Connection backend] Closing socket %d\n", *sock );
 	if( close(*sock) < 0 )
 	{
 		fprintf( stderr, "Error closing socket!: %s\n", strerror(errno) );
@@ -121,7 +121,7 @@ extern void close_socket( socket_t *sock )
 
 extern void print_error( char *message )
 {
-    fprintf( stderr, "ERROR: %s: %s\n", message, strerror(errno) );
+    fprintf( stderr, "[Connection backend] Error: %s: %s\n", message, strerror(errno) );
 
     return;
 }
