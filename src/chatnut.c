@@ -199,7 +199,8 @@ int main( int argc, char *argv[] )
 	fprintf( stderr, "Error initializing winsock\n" );
 	return EXIT_FAILURE;
     }
-    g_timeout_add_seconds( 3, watch_connection, evaluate_incoming );
+    g_idle_add(watch_connection, evaluate_incoming);
+    //g_timeout_add_seconds( 3, watch_connection, evaluate_incoming );
     if( init_chatnut_directory() != 0 )
     {
         return EXIT_FAILURE;
