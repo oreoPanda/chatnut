@@ -334,8 +334,8 @@ extern gboolean watch_connection(gpointer eval_func)
         }
 
         /*this will only be done if connection is lost and channel is NULL*/
-        int sock = create_socket();
-        if( sock > 0 )
+        socket_t sock = create_socket();
+        if( sock != (unsigned int)SOCKET_ERROR )
         {
             connected = connect_socket( &sock, "192.168.178.20", 1234 );
             if(connected)

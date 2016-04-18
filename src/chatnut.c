@@ -194,11 +194,11 @@ static void evaluate_incoming(const char *data)
 int main( int argc, char *argv[] )
 {
     gtk_init( &argc, &argv );
-	if(!winsock_init() )
-	{
-		fprintf( stderr, "Error initializing winsock\n" );
-		return EXIT_FAILURE;
-	}
+    if(!winsock_init() )
+    {
+	fprintf( stderr, "Error initializing winsock\n" );
+	return EXIT_FAILURE;
+    }
     g_timeout_add_seconds( 3, watch_connection, evaluate_incoming );
     if( init_chatnut_directory() != 0 )
     {

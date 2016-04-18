@@ -38,13 +38,14 @@ extern int winsock_init(void)
 	}
 }
 
-/*create a socket*/
+/*create a socket
+	returns the socket on success or SOCKET_ERROR (-1) on failure*/
 extern int create_socket(void)
 {
 	socket_t sock;
 
 	sock = socket( PF_INET, SOCK_STREAM, 0 );
-	if( sock == (unsigned int)SOCKET_ERROR )		//check if it worked
+	if( sock == (unsigned int)SOCKET_ERROR )
 	{
 		print_error("Unable to create socket", errno);
 	}
@@ -118,7 +119,7 @@ extern void close_socket( socket_t *sock )
 
 extern void print_error(char *message, int errnum)
 {
-    fprintf( stderr, "[Connection backend error] %s: %s\n", message, strerror(errnum) );
+    fprintf( stderr, "[Connection backend error] %s: %s (%d)\n", message, strerror(errnum), errnum );
 
     return;
 }
