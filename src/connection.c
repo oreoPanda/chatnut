@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "connection.h"
-#include "connection_raw.h"
+#include "connection_backend.h"
 
 GIOChannel *channel = NULL;
 gboolean connected = FALSE;		//only used by watch_connection and channel_in_handle
@@ -256,24 +256,24 @@ static void shutdown_channel(void)
 		}
 		case G_IO_STATUS_EOF:
 		{
-			print_error("Reached end of file while shutting down the GIOChannel");
+			print_error("Reached end of file while shutting down the GIOChannel", errno);
 			break;
 		}
 		case G_IO_STATUS_ERROR:
 		{
-			print_error("Error shutting down the GIOChannel");
+			print_error("Unable to shut down the GIOChannel", errno);
 			break;
 		}
 		default:
 		{
-			print_error("Unknown status of g_io_channel_shutdown");
+			print_error("Unknown status of g_io_channel_shutdown", errno);
 			break;
 		}
 	}
 
 	if(error)
 	{
-		print_error(error->message);
+		print_error(error->message, errno);
 		g_error_free(error);
 	}
 
@@ -337,7 +337,7 @@ extern gboolean watch_connection(gpointer eval_func)
         int sock = create_socket();
         if( sock > 0 )
         {
-            connected = connect_socket( &sock, "localhost", 1234 );
+            connected = connect_socket( &sock, "192.168.178.20", 1234 );
             if(connected)
             {
                 create_channel(sock);

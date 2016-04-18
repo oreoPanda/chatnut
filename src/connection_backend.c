@@ -15,7 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#include "connection_raw.h"
+#include "connection_backend.h"
 
 #define FALSE 0
 #define TRUE 1
@@ -29,7 +29,8 @@ extern int winsock_init(void)
 	version = MAKEWORD(1, 1);
 	if( WSAStartup(version, &winsock_data) != 0 )
 	{
-		return FALSE;	//TODO winsock error message
+		print_error("Unable to initialize Winsock 1.1", WSAGetLastError() );
+		return FALSE;
 	}
 	else
 	{
@@ -41,15 +42,13 @@ extern int winsock_init(void)
 extern int create_socket(void)
 {
 	socket_t sock;
-	const char y = 1;
 
 	sock = socket( PF_INET, SOCK_STREAM, 0 );
-	if( sock < 0 )		//check if it worked
+	if( sock == (unsigned int)SOCKET_ERROR )		//check if it worked
 	{
-		print_error("Error creating socket");
+		print_error("Unable to create socket", errno);
 	}
 
-	setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, &y, sizeof(int) );//SO_REUSEADDR makes the socket not be unusable for two minutes after server closes
 	//set to non-blocking
 	unsigned long mode = 1;
 	ioctlsocket(sock, FIONBIO, &mode);
@@ -76,7 +75,7 @@ extern int connect_socket(socket_t *sock, char *server_addr, unsigned short port
 		host_info = gethostbyname( server_addr );
 		if( host_info == NULL )		//if resolving didn't quite work
 		{
-			print_error("Error resolving server address (unknown server)");
+			print_error("Unable to resolve server address (unknown server)", errno);
                         return FALSE;
 		}
 		else
@@ -91,20 +90,19 @@ extern int connect_socket(socket_t *sock, char *server_addr, unsigned short port
 	server.sin_port = htons(port);
 
 	/*connect to server and check if connecting worked*/
-	int errcode = connect( *sock, (struct sockaddr*)&server, sizeof(server) );
-	if(errcode == 0)//TODO is this the value for success?
+	if( connect( *sock, (struct sockaddr*)&server, sizeof(server) ) == 0 )
 	{
 		//say who the client is connected to
 		printf( "[Connection] Connected to server with address %s\n", inet_ntoa(server.sin_addr) );
 		return TRUE;
 	}
-	else if(errcode != WSAEWOULDBLOCK)
-	{
-		print_error("Error connecting to server");
-		return FALSE;
-	}
 	else
 	{
+		int error = WSAGetLastError();
+		if(error != WSAEWOULDBLOCK)
+		{
+			print_error("Unable to connect to server", error);
+		}
 		return FALSE;
 	}
 	
@@ -112,16 +110,15 @@ extern int connect_socket(socket_t *sock, char *server_addr, unsigned short port
 
 extern void close_socket( socket_t *sock )
 {
-	printf( "[Connection backend] Closing socket %d\n", *sock );
 	if( close(*sock) < 0 )
 	{
-		fprintf( stderr, "Error closing socket!: %s\n", strerror(errno) );
+		print_error("Unable to close socket", errno);
 	}
 }
 
-extern void print_error( char *message )
+extern void print_error(char *message, int errnum)
 {
-    fprintf( stderr, "[Connection backend] Error: %s: %s\n", message, strerror(errno) );
+    fprintf( stderr, "[Connection backend error] %s: %s\n", message, strerror(errnum) );
 
     return;
 }
