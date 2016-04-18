@@ -49,9 +49,9 @@ extern int create_socket(void)
 		print_error("Unable to create socket", errno);
 	}
 
-	//set to non-blocking
-	unsigned long mode = 1;
-	ioctlsocket(sock, FIONBIO, &mode);
+	//set to non-blocking TODO uncomment anc check/test
+	//unsigned long mode = 1;
+	//ioctlsocket(sock, FIONBIO, &mode);
 
 	return sock;
 }

@@ -20,7 +20,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <winsock.h>	//for WSACleanup();	TODO move to connection_raw.h?
 
 #include "connection.h"
-#include "connection_raw.h"	//for winsock_init()
+#include "connection_backend.h"	//for winsock_init()
 #include "gui.h"
 #include "gui_interaction.h"
 #include "response_handlers.h"
