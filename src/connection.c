@@ -33,12 +33,12 @@ extern gboolean channel_not_null(void)
 	}
 }
 
-static void create_channel(int fd)
+static void create_channel(int socket)
 {
     GIOStatus status;
     GError *error = NULL;
 
-    channel = g_io_channel_unix_new(fd);
+    channel = g_io_channel_win32_new_socket(socket);
     if( !channel )
     {
     	//TODO use different error mechanism for this
