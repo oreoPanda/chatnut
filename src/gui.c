@@ -466,6 +466,7 @@ extern gboolean popup_login(gpointer data)
     *(bufferlist+1) = password_buffer;
 
     /*connect the "response" signal*/
+    g_signal_connect_swapped(GTK_DIALOG(dialog_add_contact, "response", G_CALLBACK(gtk_widget_destroy), NULL);
     g_signal_connect( GTK_DIALOG(dialog_login), "response", G_CALLBACK(login), NULL );
 
     return G_SOURCE_REMOVE;
@@ -480,6 +481,7 @@ extern gboolean popup_add_contact( GtkButton *button, gpointer data )
     
     if( data )
     {
+    	//add some warn function, general
         fprintf( stderr, "Data passed to the add contact popup will not be used.\n" );
     }
 
@@ -501,6 +503,7 @@ extern gboolean popup_add_contact( GtkButton *button, gpointer data )
         gtk_dialog_add_button( GTK_DIALOG(dialog_add_contact), "Cancel", GTK_RESPONSE_CANCEL );
 
         /*connect the "response" signal*/
+        g_signal_connect_swapped(GTK_DIALOG(dialog_add_contact, "response", G_CALLBACK(gtk_widget_destroy), NULL);
         g_signal_connect( GTK_DIALOG(dialog_add_contact), "response", G_CALLBACK(add_contact), field_buffer );
 
         /*I forgot it again... show the widgets*/
