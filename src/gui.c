@@ -423,7 +423,7 @@ extern gboolean window_contains_label(void)
 	return contains_label;
 }
 
-extern gboolean popup_login(gpointer data)
+extern gboolean popup_login()
 {
     GtkWidget *dialog_content_area = NULL,
                 *username_entry_field = NULL,
@@ -431,11 +431,6 @@ extern gboolean popup_login(gpointer data)
     GtkEntryBuffer *username_buffer = NULL,
                     *password_buffer = NULL,
                     **bufferlist = NULL;
-
-    if( data )
-    {
-        fprintf( stderr, "Data passed to the login popup will not be used.\n" );
-    }
     
     /*dialog*/
     dialog_login = gtk_dialog_new();
@@ -466,8 +461,8 @@ extern gboolean popup_login(gpointer data)
     *(bufferlist+1) = password_buffer;
 
     /*connect the "response" signal TODO check order and remove destroycommets in guiinteraction*/
-    g_signal_connect_swapped(GTK_DIALOG(dialog_add_contact, "response", G_CALLBACK(gtk_widget_destroy), NULL);
     g_signal_connect( GTK_DIALOG(dialog_login), "response", G_CALLBACK(login), NULL );
+    g_signal_connect_swapped( GTK_DIALOG(dialog_login), "response", G_CALLBACK(gtk_widget_destroy), dialog_login);
 
     return G_SOURCE_REMOVE;
 }
@@ -503,8 +498,8 @@ extern gboolean popup_add_contact( GtkButton *button, gpointer data )
         gtk_dialog_add_button( GTK_DIALOG(dialog_add_contact), "Cancel", GTK_RESPONSE_CANCEL );
 
         /*connect the "response" signal TODO order abd guiinteraction*/
-        g_signal_connect_swapped(GTK_DIALOG(dialog_add_contact, "response", G_CALLBACK(gtk_widget_destroy), NULL);
         g_signal_connect( GTK_DIALOG(dialog_add_contact), "response", G_CALLBACK(add_contact), field_buffer );
+        g_signal_connect_swapped( GTK_DIALOG(dialog_add_contact), "response", G_CALLBACK(gtk_widget_destroy), dialog_add_contact);
 
         /*I forgot it again... show the widgets*/
         gtk_widget_show(dialog_add_contact);
