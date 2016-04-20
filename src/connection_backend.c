@@ -111,7 +111,7 @@ extern int connect_socket(socket_t *sock, char *server_addr, unsigned short port
 
 extern void close_socket( socket_t *sock )
 {
-	if( close(*sock) < 0 )
+	if( closesocket(*sock) < 0 )
 	{
 		print_error("Unable to close socket", errno);
 	}
