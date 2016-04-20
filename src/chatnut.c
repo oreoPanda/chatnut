@@ -99,14 +99,14 @@ static void evaluate_incoming(const char *data)
 		{
 			printf( "[Server reply] Connected\n");
 
-			g_idle_add( popup_login, NULL );
+			popup_login();
 			break;
 		}
 		case LOGIN_FAILURE:
 		{
 			printf( "[Server reply] Login failure\n");
 
-			g_idle_add( popup_login, NULL );
+			popup_login());
 			break;
 		}
 		case LOGIN_SUCCESS:
