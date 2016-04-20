@@ -106,7 +106,7 @@ static void evaluate_incoming(const char *data)
 		{
 			printf( "[Server reply] Login failure\n");
 
-			popup_login());
+			popup_login();
 			break;
 		}
 		case LOGIN_SUCCESS:
