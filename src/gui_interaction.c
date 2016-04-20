@@ -50,13 +50,13 @@ extern gboolean add_contact( GtkDialog *dialog, gint response_id, gpointer data 
             }
             free(command);
 
-            gtk_widget_destroy(GTK_WIDGET(dialog));
+            //gtk_widget_destroy(GTK_WIDGET(dialog));
 
             break;
         }
         case GTK_RESPONSE_CANCEL:
         {
-            gtk_widget_destroy(GTK_WIDGET(dialog));
+            //gtk_widget_destroy(GTK_WIDGET(dialog));
 
             break;
         }
@@ -130,7 +130,7 @@ extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
 
         free(command);
 
-        gtk_widget_destroy(GTK_WIDGET(dialog));
+        //gtk_widget_destroy(GTK_WIDGET(dialog));
     }
     else
     {
