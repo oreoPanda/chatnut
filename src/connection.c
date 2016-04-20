@@ -177,7 +177,7 @@ extern void write_to_channel( const char *message, const char *username )
 	{
 		case G_IO_STATUS_ERROR:
 		{
-			fprintf( stderr, "Error writing to a GIOChannel.\n" );
+			fprintf( stderr, "[Connection error] Unable to write to a GIOChannel.\n" );
 			break;
 		}
 		case G_IO_STATUS_NORMAL:
@@ -186,12 +186,12 @@ extern void write_to_channel( const char *message, const char *username )
 		}
 		case G_IO_STATUS_EOF:
 		{
-			fprintf( stderr, "Reached end of file while writing to a GIOChannel.\n" );
+			fprintf( stderr, "[Connection error] Reached end of file while writing to a GIOChannel.\n" );
 			break;
 		}
 		default:
 		{
-			fprintf( stderr, "Unknown return value while writing to a GIOChannel\n" );
+			fprintf( stderr, "[Connection error] Unknown return value while writing to a GIOChannel\n" );
 			break;
 		}
 	}
@@ -201,7 +201,7 @@ extern void write_to_channel( const char *message, const char *username )
 	}
 	if(error)
 	{
-		fprintf( stderr, "%s", error->message );
+		fprintf( stderr, "[--Detail--] %s\n", error->message );
 		error = NULL;
 	}
 
@@ -217,7 +217,7 @@ extern void write_to_channel( const char *message, const char *username )
 	{
 		case G_IO_STATUS_ERROR:
 		{
-			fprintf( stderr, "(write_to_channel)Error flushing GIOChannel.\n" );
+			fprintf( stderr, "[Connection error] Error flushing GIOChannel.\n" );
 			break;
 		}
 		case G_IO_STATUS_NORMAL:
@@ -226,19 +226,20 @@ extern void write_to_channel( const char *message, const char *username )
 		}
 		default:
 		{
-			fprintf( stderr, "Unknown return value flushing GIOChannel\n" );
+			fprintf( stderr, "[Connection error] Unknown return value flushing GIOChannel\n" );
 			break;
 		}
 	}
 	if(error)
 	{
-		fprintf( stderr, "%s", error->message );
+		fprintf( stderr, "[--Detail--] %s\n", error->message );
 		error = NULL;
 	}
 
 	return;
 }
 
+/*TODO check if errno works and then decide to use this way to print errors or the one used in write_to_channel()*/
 static void shutdown_channel(void)
 {
 	GIOStatus status;
@@ -256,17 +257,17 @@ static void shutdown_channel(void)
 		}
 		case G_IO_STATUS_EOF:
 		{
-			print_error("Reached end of file while shutting down the GIOChannel", errno);
+			print_error("[Connection error] Reached end of file while shutting down the GIOChannel", errno);
 			break;
 		}
 		case G_IO_STATUS_ERROR:
 		{
-			print_error("Unable to shut down the GIOChannel", errno);
+			print_error("[Connection error] Unable to shut down the GIOChannel", errno);
 			break;
 		}
 		default:
 		{
-			print_error("Unknown status of g_io_channel_shutdown", errno);
+			print_error("[Connection error] Unknown status of g_io_channel_shutdown", errno);
 			break;
 		}
 	}
