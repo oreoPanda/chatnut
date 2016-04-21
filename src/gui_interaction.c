@@ -23,15 +23,33 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <string.h>
 #include <stdlib.h>
 
+//get data from the Connect dialog and set it so that connecting is possible
 extern gboolean connect_callback(GtkDialog *dialog, gint response_id, gpointer data)
 {
+	if(data)
+	{
+		//TODO call warn function (unexpected argument in callback %s\n)
+	}
 	switch(response_id)
 	{
-		GtkEntryBuffer *buffer = data;
-	}
-        default:
-        {
-            //TODO use a different error report for this, print_error is for connection_raw.c and should not be in connection_raw.h
+		case GTK_RESPONSE_OK:
+		{
+			//get entries from dialog...
+			GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
+			GList *elements = gtk_container_get_children(GTK_CONTAINER(content_area));
+			GtkEntry *address_entry = elements->data;
+			elements = elements->next;
+			GtkEntry *port_entry = elements->data;
+			
+			//get text from entries... TODO check types when getting port and see if the port entry can get a mask that only allows numbers
+              
+			//TODO check for copy or leaks
+			//set
+				set_connection_data(gtk_entry_get_text(address_entry), gtk_entry_get_text(port_entry));
+		}
+		default:
+   { 
+            //TODO use a different error report for this, print_error is for connection_raw.c and should not be in connection_raw.h. suggestion: gtkdialog response warning
             fprintf( stderr, "Unhandled response id for GtkDialog.\n" );
 
             break;
@@ -95,11 +113,10 @@ extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
     GList *list_of_elements = NULL;
     GtkWidget *username_entry = NULL;
     GtkWidget *password_entry = NULL;
-    GtkEntryBuffer *usernamebuffer = NULL;
-    GtkEntryBuffer *passwordbuffer = NULL;
     
     if( data )
     {
+    	//TODO warn
         fprintf( stderr, "(login) Ignoring data passed as gpointer.\n" );
     }
 
@@ -107,20 +124,15 @@ extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
     {
         /*get elements inside the widgets content area, which is a GtkBox, which is a GtkContainer*/
         content_area = gtk_dialog_get_content_area(dialog);
-        list_of_elements = gtk_container_get_children(GTK_CONTAINER(content_area));
-        GList *l = list_of_elements;
-        username_entry = l->data;
-        l = l->next;
-        password_entry = l->data;
-        l = l->next;
+        elements = gtk_container_get_children(GTK_CONTAINER(content_area));
+
+        username_entry = elements->data;
+        elements = elements->next;
+        password_entry = elements->data;
         
-        /*get buffers from the two GtkEntries*/
-        usernamebuffer = gtk_entry_get_buffer(GTK_ENTRY(username_entry));
-        passwordbuffer = gtk_entry_get_buffer(GTK_ENTRY(password_entry));
-        
-        /*get username and password, const, so should not be free()d*/
-        const char *username = gtk_entry_buffer_get_text(usernamebuffer);
-        const char *password = gtk_entry_buffer_get_text(passwordbuffer);
+        /*check const and so on*/
+        const char *username = gtk_entry_get_text(username_entry);
+        const char *password = gtk_entry_get_text(password_entry);
 
         /*create and send login command to server*/
         commandlen = strlen("/login ")
@@ -147,7 +159,7 @@ extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
 
         //gtk_widget_destroy(GTK_WIDGET(dialog));
     }
-    else
+    else	//not GTK_RESPONSE_OK
     {
         fprintf( stdout, "Warning, The login dialog sent response_id not equal to GTK_RESPONSE_OK\n" );
     }

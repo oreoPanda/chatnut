@@ -19,6 +19,8 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "connection_raw.h"
 
 GIOChannel *channel = NULL;
+char *address = NULL;
+unsigned short port = 0;//TODO ok? what happens on port 0?
 gboolean connected = FALSE;		//only used by watch_connection and channel_in_handle
 
 extern gboolean channel_not_null(void)
@@ -322,9 +324,19 @@ static gboolean channel_in_handle( GIOChannel *source, GIOCondition condition, g
     }
 }
 
+/*sets the variables address and port*/
+//TODO check, strncpy
+extern void set_connection_data(char *addr, unsigned short p)
+{
+	address = calloc(address, strlen(addr)+1, sizeof(char));
+	strncpy(addr, strlen(addr)+1, address);
+	port = p;
+	
+	return;
+}
 extern gboolean watch_connection(gpointer eval_func)
 {
-    if(!connected)  //if not connected, has to be connected
+    if(!connected && address)  //if not connected and if address has been set, has to be connected
     {
         if(channel)
         {
@@ -337,7 +349,7 @@ extern gboolean watch_connection(gpointer eval_func)
         int sock = create_socket();
         if( sock > 0 )
         {
-            connected = connect_socket( &sock, "localhost", 1234 );
+            connected = connect_socket(&sock, address, port);
             if(connected)
             {
                 create_channel(sock);

@@ -424,14 +424,12 @@ extern gboolean window_contains_label(void)
 	return contains_label;
 }
 
+//login popup, no cancel button
 extern gboolean popup_login()
 {
     GtkWidget *dialog_content_area = NULL,
                 *username_entry_field = NULL,
                 *password_entry_field = NULL;
-    GtkEntryBuffer *username_buffer = NULL,
-                    *password_buffer = NULL,
-                    **bufferlist = NULL;
     
     /*dialog*/
     dialog_login = gtk_dialog_new();
@@ -442,24 +440,16 @@ extern gboolean popup_login()
 
     /*username entry*/
     username_entry_field = gtk_entry_new();
-    username_buffer = gtk_entry_buffer_new( NULL, 0 );
-    gtk_entry_set_buffer( GTK_ENTRY(username_entry_field), GTK_ENTRY_BUFFER(username_buffer) );
     gtk_widget_show(username_entry_field);
 
     /*password entry*/
     password_entry_field = gtk_entry_new();
-    password_buffer = gtk_entry_buffer_new( NULL, 0 );
-    gtk_entry_set_buffer( GTK_ENTRY(password_entry_field), GTK_ENTRY_BUFFER(password_buffer) );
     gtk_widget_show(password_entry_field);
 
     /*pack*/
     gtk_box_pack_start( GTK_BOX(dialog_content_area), username_entry_field, FALSE, FALSE, 0 );
     gtk_box_pack_start( GTK_BOX(dialog_content_area), password_entry_field, FALSE, FALSE, 0 );
     gtk_dialog_add_button( GTK_DIALOG(dialog_login),  "OK/Login", GTK_RESPONSE_OK );
-
-    bufferlist = calloc( 2, sizeof(GtkEntryBuffer *) );
-    *bufferlist = username_buffer;
-    *(bufferlist+1) = password_buffer;
 
     /*connect the "response" signal TODO check order and remove destroycommets in guiinteraction*/
     g_signal_connect( GTK_DIALOG(dialog_login), "response", G_CALLBACK(login), NULL );
@@ -468,44 +458,34 @@ extern gboolean popup_login()
     return G_SOURCE_REMOVE;
 }
 
+//Connect popup, no cancel button and not always in front
 extern void popup_connect()
 {
     GtkWidget *dialog_content_area = NULL,
                 *address_entry_field = NULL,
                 *port_entry_field = NULL;
-    GtkEntryBuffer *address_buffer = NULL,
-                    *port_buffer = NULL,
-                    **bufferlist = NULL;
     
     /*dialog*/
     dialog_connect = gtk_dialog_new();
    
    //what is transient? TODO
-    gtk_window_set_transient_for(GTK_WINDOW(dialog_connect), GTK_WINDOW(window) );
+gtk_window_set_transient_for(GTK_WINDOW(dialog_connect), GTK_WINDOW(window) );
     //gtk_window_set_attached_to(GTK_WINDOW(dialog_login), window );
     dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_connect));
     gtk_widget_show(dialog_connect);
 
     /*address entry*/
     address_entry_field = gtk_entry_new();
-    address_buffer = gtk_entry_buffer_new( NULL, 0 );
-    gtk_entry_set_buffer( GTK_ENTRY(address_entry_field), GTK_ENTRY_BUFFER(address_buffer) );
     gtk_widget_show(address_entry_field);
 
     /*port entry*/
     port_entry_field = gtk_entry_new();
-    port_buffer = gtk_entry_buffer_new( NULL, 0 );
-    gtk_entry_set_buffer( GTK_ENTRY(port_entry_field), GTK_ENTRY_BUFFER(port_buffer) );
     gtk_widget_show(port_entry_field);
 
     /*pack*/
     gtk_box_pack_start( GTK_BOX(dialog_content_area), address_entry_field, FALSE, FALSE, 0 );
     gtk_box_pack_start( GTK_BOX(dialog_content_area), port_entry_field, FALSE, FALSE, 0 );
     gtk_dialog_add_button( GTK_DIALOG(dialog_connect),  "OK/Login", GTK_RESPONSE_OK );
-
-    bufferlist = calloc( 2, sizeof(GtkEntryBuffer *) );
-    *bufferlist = address_buffer;
-    *(bufferlist+1) = port_buffer;
 
     /*connect the "response" signal TODO check order and remove destroycommets in guiinteraction*/
     g_signal_connect( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(set_connection_data), NULL);
@@ -514,7 +494,6 @@ extern void popup_connect()
     return;
 }
 
-//TODO do I need to free() or g_free() (?) dialog_content_area, field_buffer and so on?
 extern gboolean popup_add_contact( GtkButton *button, gpointer data )
 {
     GtkWidget *dialog_content_area = NULL,
