@@ -34,7 +34,8 @@ GtkWidget *window = NULL,
                 *label = NULL,
                 *button_add_contact = NULL;
 GtkWidget *dialog_add_contact = NULL,
-                *dialog_login = NULL;
+                *dialog_login = NULL,
+                *dialog_connect = NULL;
 
 gboolean input_view_enabled = FALSE;
 gulong input_view_key_press_handler_id = 0;
@@ -465,6 +466,52 @@ extern gboolean popup_login()
     g_signal_connect_swapped( GTK_DIALOG(dialog_login), "response", G_CALLBACK(gtk_widget_destroy), dialog_login);
 
     return G_SOURCE_REMOVE;
+}
+
+extern void popup_connect()
+{
+    GtkWidget *dialog_content_area = NULL,
+                *address_entry_field = NULL,
+                *port_entry_field = NULL;
+    GtkEntryBuffer *address_buffer = NULL,
+                    *port_buffer = NULL,
+                    **bufferlist = NULL;
+    
+    /*dialog*/
+    dialog_connect = gtk_dialog_new();
+   
+   //what is transient? TODO
+    gtk_window_set_transient_for(GTK_WINDOW(dialog_connect), GTK_WINDOW(window) );
+    //gtk_window_set_attached_to(GTK_WINDOW(dialog_login), window );
+    dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_connect));
+    gtk_widget_show(dialog_connect);
+
+    /*address entry*/
+    address_entry_field = gtk_entry_new();
+    address_buffer = gtk_entry_buffer_new( NULL, 0 );
+    gtk_entry_set_buffer( GTK_ENTRY(address_entry_field), GTK_ENTRY_BUFFER(address_buffer) );
+    gtk_widget_show(address_entry_field);
+
+    /*port entry*/
+    port_entry_field = gtk_entry_new();
+    port_buffer = gtk_entry_buffer_new( NULL, 0 );
+    gtk_entry_set_buffer( GTK_ENTRY(port_entry_field), GTK_ENTRY_BUFFER(port_buffer) );
+    gtk_widget_show(port_entry_field);
+
+    /*pack*/
+    gtk_box_pack_start( GTK_BOX(dialog_content_area), address_entry_field, FALSE, FALSE, 0 );
+    gtk_box_pack_start( GTK_BOX(dialog_content_area), port_entry_field, FALSE, FALSE, 0 );
+    gtk_dialog_add_button( GTK_DIALOG(dialog_connect),  "OK/Login", GTK_RESPONSE_OK );
+
+    bufferlist = calloc( 2, sizeof(GtkEntryBuffer *) );
+    *bufferlist = address_buffer;
+    *(bufferlist+1) = port_buffer;
+
+    /*connect the "response" signal TODO check order and remove destroycommets in guiinteraction*/
+    g_signal_connect( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(set_connection_data), NULL);
+    g_signal_connect_swapped( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(gtk_widget_destroy), dialog_connect);
+
+    return;
 }
 
 //TODO do I need to free() or g_free() (?) dialog_content_area, field_buffer and so on?

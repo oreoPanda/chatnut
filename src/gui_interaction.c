@@ -23,6 +23,21 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <string.h>
 #include <stdlib.h>
 
+extern gboolean connect_callback(GtkDialog *dialog, gint response_id, gpointer data)
+{
+	switch(response_id)
+	{
+		GtkEntryBuffer *buffer = data;
+	}
+        default:
+        {
+            //TODO use a different error report for this, print_error is for connection_raw.c and should not be in connection_raw.h
+            fprintf( stderr, "Unhandled response id for GtkDialog.\n" );
+
+            break;
+        }
+}
+
 //ask the server if the requested contact exists, gets called by the Add Contact dialog
 extern gboolean add_contact( GtkDialog *dialog, gint response_id, gpointer data )
 {
