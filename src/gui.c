@@ -467,9 +467,9 @@ extern void popup_connect()
     
     /*dialog*/
     dialog_connect = gtk_dialog_new();
-   
-   //what is transient? TODO
-gtk_window_set_transient_for(GTK_WINDOW(dialog_connect), GTK_WINDOW(window) );
+
+    //what is transient? TODO
+    gtk_window_set_transient_for(GTK_WINDOW(dialog_connect), GTK_WINDOW(window) );
     //gtk_window_set_attached_to(GTK_WINDOW(dialog_login), window );
     dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_connect));
     gtk_widget_show(dialog_connect);

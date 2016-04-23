@@ -42,10 +42,11 @@ extern gboolean connect_callback(GtkDialog *dialog, gint response_id, gpointer d
 			GtkEntry *port_entry = elements->data;
 			
 			//get text from entries... TODO check types when getting port and see if the port entry can get a mask that only allows numbers
+
               
 			//TODO check for copy or leaks
 			//set
-				set_connection_data(gtk_entry_get_text(address_entry), gtk_entry_get_text(port_entry));
+			set_connection_data(gtk_entry_get_text(address_entry), gtk_entry_get_num(port_entry));
 		}
 		default:
    { 

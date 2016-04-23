@@ -20,6 +20,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <gtk/gtk.h>
 
+extern gboolean connect_callback(GtkDialog *dialog, gint response_id, gpointer data);
 extern gboolean add_contact( GtkDialog *dialog, gint response_id, gpointer data );
 extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data );
 extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treepath, GtkTreeViewColumn *column, gpointer data );
