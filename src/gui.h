@@ -40,6 +40,7 @@ extern void show_list_view(GtkListStore *model);
 extern void add_contact_to_list_view(const char *contact);
 extern void create_label(const gchar *message);
 extern void destroy_label(void);
+extern void destroy_list(void);
 extern void create_buttons(void);
 
 extern void populate_window(void);
@@ -48,6 +49,7 @@ extern void populate_window_with_label(void);
 extern void enable_add_contact_button(void);
 
 extern gboolean window_contains_label(void);
+extern gboolean window_contains_list(void);
 
 extern gboolean popup_login(gpointer data);
 extern gboolean popup_add_contact( GtkButton *button, gpointer data );

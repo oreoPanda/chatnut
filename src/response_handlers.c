@@ -53,6 +53,19 @@ extern void handle_lookup_success(const char *contact)
 
 extern void handle_login_success(const char *username)
 {
+	static int login_status = FALSE;	//static variable that keeps track if user has logged in
+
+	if(login_status == TRUE)
+	{
+		if(chdir("../") != 0)
+		{
+			fprintf(stderr, "Error switching out of the previous user's directory: %s\n", strerror(errno) );
+		}
+	}
+
+	/*set login status to TRUE*/
+	login_status = TRUE;
+
     /*connect the "Add Contact" button to its handler*/
     enable_add_contact_button();
     
@@ -69,7 +82,15 @@ extern void handle_login_success(const char *username)
     update_window_title();
 
     /*load and show contacts*/
-	destroy_label();
+    if(window_contains_label() )
+    {
+    	destroy_label();
+    }
+    else
+    {
+    	destroy_list();
+    }
+
 	GtkListStore *model = create_contact_list_model();
 	if(model)
 	{

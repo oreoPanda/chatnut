@@ -357,6 +357,13 @@ extern void destroy_label(void)
 	return;
 }
 
+extern void destroy_list(void)
+{
+	gtk_widget_destroy(list);	//TODO check
+
+	return;
+}
+
 extern void create_buttons(void)
 {
 	button_contacts = gtk_button_new_with_label("Contacts");
