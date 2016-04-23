@@ -467,20 +467,18 @@ extern void popup_connect()
     
     /*dialog*/
     dialog_connect = gtk_dialog_new();
+    gtk_dialog_set_input_purpose(GTK_INPUT_PURPOSE_DIGITS);
    
    //what is transient? TODO
 gtk_window_set_transient_for(GTK_WINDOW(dialog_connect), GTK_WINDOW(window) );
     //gtk_window_set_attached_to(GTK_WINDOW(dialog_login), window );
     dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_connect));
-    gtk_widget_show(dialog_connect);
 
     /*address entry*/
     address_entry_field = gtk_entry_new();
-    gtk_widget_show(address_entry_field);
 
     /*port entry*/
     port_entry_field = gtk_entry_new();
-    gtk_widget_show(port_entry_field);
 
     /*pack*/
     gtk_box_pack_start( GTK_BOX(dialog_content_area), address_entry_field, FALSE, FALSE, 0 );
@@ -490,24 +488,22 @@ gtk_window_set_transient_for(GTK_WINDOW(dialog_connect), GTK_WINDOW(window) );
     /*connect the "response" signal TODO check order and remove destroycommets in guiinteraction*/
     g_signal_connect( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(set_connection_data), NULL);
     g_signal_connect_swapped( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(gtk_widget_destroy), dialog_connect);
+    
+    //show
+    gtk_widget_show(address_entry_field);
+    gtk_widget_show(port_entry_field);
+    gtk_widget_show(dialog_connect);
 
     return;
 }
 
-extern gboolean popup_add_contact( GtkButton *button, gpointer data )
+/*open up a dialog for adding a contact. TODO check argu ents of callback*/
+extern void popup_add_contact(void)
 {
     GtkWidget *dialog_content_area = NULL,
                 *contact_entry_field = NULL;
     GtkEntryBuffer *field_buffer = NULL;
     
-    if( data )
-    {
-    	//add some warn function, general
-        fprintf( stderr, "Data passed to the add contact popup will not be used.\n" );
-    }
-
-    if( button )
-    {
         /*dialog*/
         dialog_add_contact = gtk_dialog_new();
         gtk_window_set_transient_for(GTK_WINDOW(dialog_add_contact), GTK_WINDOW(window) );
@@ -530,8 +526,6 @@ extern gboolean popup_add_contact( GtkButton *button, gpointer data )
         /*I forgot it again... show the widgets*/
         gtk_widget_show(dialog_add_contact);
         gtk_widget_show(contact_entry_field);
-    }
 
-    //TODO return value doesn't seem to matter?
-    return G_SOURCE_REMOVE;
+    return;
 }

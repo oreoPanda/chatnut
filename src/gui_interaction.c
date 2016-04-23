@@ -22,6 +22,8 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "user.h"
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <errno.h>
 
 //get data from the Connect dialog and set it so that connecting is possible
 extern gboolean connect_callback(GtkDialog *dialog, gint response_id, gpointer data)
@@ -41,11 +43,20 @@ extern gboolean connect_callback(GtkDialog *dialog, gint response_id, gpointer d
 			elements = elements->next;
 			GtkEntry *port_entry = elements->data;
 			
-			//get text from entries... TODO check types when getting port and see if the port entry can get a mask that only allows numbers
-              
-			//TODO check for copy or leaks
-			//set
-				set_connection_data(gtk_entry_get_text(address_entry), gtk_entry_get_text(port_entry));
+			//get text from entries... TODO check types when getting port
+			const char *buf = gtk_entry_get_text(port_entry);
+			char *end = NULL;
+			errno = 0;
+			long p = strtol(sport, &end, 10);
+			//check for valid port
+			if(end != buf && *end == '\0' && errno != ERANGE && (p >= 0 && p <= USHRT_MAX) )
+			{
+				set_connection_data(gtk_entry_get_text(address_entry), port);
+			}
+			else
+			{
+				popup_connect();
+			}
 		}
 		default:
    { 
@@ -225,23 +236,17 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
 
 extern gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event, gpointer data )
 {
+	if(event->type != GDK_KEY_PRESS || data)
+	{
+		callback_warn();
+	}
+	
 	guint keyval;
 	GtkTextBuffer *inputbuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(inputview));
 	GtkTextIter start;
 	GtkTextIter end;
 	gchar *text = NULL;
-
-	/*check that a key-press-event is connected*/
-	if(event->type != GDK_KEY_PRESS)
-	{
-		fprintf(stderr, "[Key press handle] Error: The connected event is not of type GDK_KEY_PRESS.\n");
-	}
-
-	if(data)
-	{
-		fprintf(stderr, "[Key press handle] Warning: Data set but not used.\n");
-	}
-
+	
 	gdk_event_get_keyval( event, &keyval );		//keyvals from <gdk/gdkkeysyms.h>
 
 	switch(keyval)
@@ -272,4 +277,20 @@ extern gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event
 			return FALSE;	//propagate event further, so that characters show up in input view
 		}
 	}
+}
+
+extern gboolean add_contact_button_press(GtkButton *button, gpointer data)
+{
+	if(!button || data)
+	{
+		callback_warn();
+	}
+	
+	popup_add_contact();
+}
+
+static void callback_warn(void)
+{
+	fprintf(stderr, "[GUI Callback Warning] Unexpected argument.\n");
+	return;
 }
