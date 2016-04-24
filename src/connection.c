@@ -338,8 +338,16 @@ extern void set_connection_data(const char *addr, unsigned short p)
 
 extern gboolean watch_connection(gpointer eval_func)
 {
-    if(!connected && address)  //if not connected and if address has been set, has to be connected
-    {
+			/*only do something if chatnut isn´t connected yet*/
+			if(!connected)
+			{
+					/*ask for server connection data if it was not set yet*/
+   			 if(!address)
+  		  {
+  		     	popup_connect();
+  		  }
+  		  else
+  		  {
         if(channel)
         {
             shutdown_channel();
@@ -362,9 +370,9 @@ extern gboolean watch_connection(gpointer eval_func)
                 close_socket(&sock);
             }
         }
-    }
+		   }
 
-    return G_SOURCE_CONTINUE;   //this callback should not be removed
+    return G_SOURCE_REMOVE;		//no other function called  by the signal that calls this one, so we might as well remove the signal TODO check comment and return value
 }
 
 /*free and reset connection data*/
