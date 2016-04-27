@@ -15,6 +15,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
+//TODO this is part of chatnut
+
 #include "connection.h"
 #include "connection_raw.h"
 
@@ -282,6 +284,7 @@ static void shutdown_channel(void)
 	return;
 }
 
+//check that this callback isn't rec%nnected indefinitely
 static gboolean channel_in_handle( GIOChannel *source, GIOCondition condition, gpointer eval_func )
 {
     int read_status = FAILURE;

@@ -166,7 +166,7 @@ static void evaluate_incoming(const char *data)
 
 			/*append the actual message to history*/
 			append_to_history( raw_message, buddy_username, TRUE );
-			if( get_buddy() )//TODO make sure get_buddy is ALWAYS (no matter whether or not buddy is online) the currently selected one
+			if( get_buddy() )
 			{
 				if( strcmp( get_buddy(), buddy_username ) == 0 )
 				{
