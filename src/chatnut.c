@@ -201,5 +201,6 @@ int main( int argc, char *argv[] )
     create_gui();
     gtk_main();
     cleanup_connection_data();
+    shutdown_logger();
     return EXIT_SUCCESS;
 }
