@@ -21,19 +21,19 @@ FILE *ef = stderr, *lf = stdout, *wf = stdout;
 
 extern void error(const char *cat, const char *msg)
 {
-	fprintf(ef, "[%s] %s.\n", cat, msg);
+	fprintf(ef, "[%s] %s: %s.\n", cat, msg, strerror(errno));
 	return;
 }
 
 extern void log(const char *cat, const char *msg)
 {
-	fprintf(lf, "[%s] %s.\n", cat, msg);
+	fprintf(lf, "[%s] %s: %s.\n", cat, msg, strerror(errno));
 	return;
 }
 
 extern void warn(const char *cat, const char *msg)
 {
-	fprintf(wf, "[%s] %s.\n", cat, msg);
+	fprintf(wf, "[%s] %s: %s.\n", cat, msg, strerror(errno));
 	return;
 }
 

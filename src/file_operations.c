@@ -21,6 +21,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <sys/stat.h>	//for mkdir()
 
 #include "file_operations.h"
+#include "logger.h"
 #include "user.h"
 
 static size_t separate_lines( const char *raw, char ***lines );
@@ -260,48 +261,51 @@ extern void append_to_history( const char *message, const char *buddyname, gbool
 
 extern int init_chatnut_directory(void)
 {
+			errno = 0;
     if( chdir(getenv("HOME")) != 0 )
     {
-        fprintf( stderr, "Error switching into your home directory: %s\n", strerror(errno) );
+        error("Initialization", "Unable to switch into your home directory");
         return 1;
     }
     if( mkdir( ".chatnut", 0755 ) != 0 )
     {
         if( errno != EEXIST )
         {
-            fprintf( stderr, "Error creating directory .chatnut in your home directory: %s\n", strerror(errno) );
+        error("Initialization", "Unable to create directory .chatnut in your home directory");
             return 1;
         }
     }
     if( chdir(".chatnut") != 0 )
     {
-        fprintf( stderr, "Error switching to .chatnut in your home directory: %s\n", strerror(errno) );
+        error("Initialization", "Unable to switch to .chatnut in your home directory");
         return 1;
     }
+    
     return 0;
 }
 
 extern int init_user_directory(void)
 {
+			errno = 0;
     /*directories*/
     if( mkdir( get_username(), 0755 ) != 0 )
     {
         if( errno != EEXIST )
         {
-            fprintf( stderr, "Error creating users directory in $HOME/.chatnut: %s\n", strerror(errno) );
+            error("Initialization", "Unable to create user´s directory in $HOME/.chatnut");
             return 1;
         }
     }
     if( chdir(get_username()) != 0 )
     {
-        fprintf( stderr, "Error switching into user's directory in $HOME/.chatnut: %s\n", strerror(errno) );
+        error("Initialization", "Unable to switch into user's directory in $HOME/.chatnut");
         return 1;
     }
     if( mkdir( "history", 0755 ) != 0 )
     {
         if( errno != EEXIST )
         {
-            fprintf( stderr, "Error creating history directory for user in $HOME/.chatnut/[user]: %s\n", strerror(errno) );
+            error("Initialization", "Unable to create history directory for user in $HOME/.chatnut/[user]");
             return 1;
         }
     }

@@ -195,7 +195,6 @@ int main( int argc, char *argv[] )
     g_idle_add( watch_connection, evaluate_incoming );
     if( init_chatnut_directory() != 0 )
     {
-        fprintf( stderr, "Error initializing directory .chatnut in $HOME. Make sure this process is allowed to create directories in $HOME.\n" );
         return EXIT_FAILURE;
     }
     create_gui();
