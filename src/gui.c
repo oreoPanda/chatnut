@@ -435,18 +435,16 @@ extern void popup_login()
     
     /*dialog*/
     dialog_login = gtk_dialog_new();
+
+
     gtk_window_set_transient_for(GTK_WINDOW(dialog_login), GTK_WINDOW(window) );
-    //gtk_window_set_attached_to(GTK_WINDOW(dialog_login), window );
     dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_login));
-    gtk_widget_show(dialog_login);
 
     /*username entry*/
     username_entry_field = gtk_entry_new();
-    gtk_widget_show(username_entry_field);
 
     /*password entry*/
     password_entry_field = gtk_entry_new();
-    gtk_widget_show(password_entry_field);
 
     /*pack*/
     gtk_box_pack_start( GTK_BOX(dialog_content_area), username_entry_field, FALSE, FALSE, 0 );
@@ -456,6 +454,10 @@ extern void popup_login()
     /*connect the "response" signal*/
     g_signal_connect( GTK_DIALOG(dialog_login), "response", G_CALLBACK(login), NULL );
     g_signal_connect_swapped( GTK_DIALOG(dialog_login), "response", G_CALLBACK(gtk_widget_destroy), dialog_login);
+
+    gtk_widget_show(username_entry_field);
+    gtk_widget_show(password_entry_field);
+    gtk_widget_show(dialog_login);
 
     return;
 }
@@ -470,18 +472,16 @@ extern void popup_connect()
     /*dialog*/
     dialog_connect = gtk_dialog_new();
 
-    //set it to transient (belongs to window below, may not outlast it and is always on top) and modal (window below won't react)
+    //set it to transient (belongs to window below, may not outlast it and is always on top)
     gtk_window_set_transient_for(GTK_WINDOW(dialog_connect), GTK_WINDOW(window) );
-    gtk_window_set_modal(GTK_WINDOW(dialog_connect), TRUE);
     dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_connect));
 
     /*address entry*/
     address_entry_field = gtk_entry_new();
-    gtk_entry_set_input_purpose(GTK_ENTRY(address_entry_field), GTK_INPUT_PURPOSE_URL);
 
     /*port entry*/
     port_entry_field = gtk_entry_new();
-    gtk_entry_set_input_purpose(GTK_ENTRY(port_entry_field), GTK_INPUT_PURPOSE_DIGITS);
+    gtk_entry_set_input_purpose(GTK_ENTRY(port_entry_field), GTK_INPUT_PURPOSE_DIGITS);	//help the onscreen keyboards
 
     /*pack*/
     gtk_box_pack_start( GTK_BOX(dialog_content_area), address_entry_field, FALSE, FALSE, 0 );

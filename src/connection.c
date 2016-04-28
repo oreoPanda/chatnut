@@ -369,13 +369,17 @@ extern gboolean watch_connection(gpointer eval_func)
 			if( sock > 0 )
 			{
 				connected = connect_socket(&sock, address, port);
-				if(connected)
+				if(connected)	//chatnut is now connected to a server
 				{
 					create_channel(sock);
 					g_io_add_watch( channel, G_IO_IN, channel_in_handle, eval_func );
 				}
-				else
+				else		//connection failed, ask for data again
 				{
+					free(address);
+					address = NULL;
+					port = 0;
+					waiting_for_data = FALSE;
 					close_socket(&sock);
 				}
 			}
