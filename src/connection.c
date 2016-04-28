@@ -19,11 +19,13 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "connection.h"
 #include "connection_raw.h"
+#include "gui.h"
 
 GIOChannel *channel = NULL;
 char *address = NULL;
 unsigned short port = 0;//TODO ok? what happens on port 0?
 gboolean connected = FALSE;		//only used by watch_connection and channel_in_handle
+gboolean waiting_for_data = FALSE;
 
 extern gboolean channel_not_null(void)
 {
@@ -341,45 +343,54 @@ extern void set_connection_data(const char *addr, unsigned short p)
 
 extern gboolean watch_connection(gpointer eval_func)
 {
-			/*only do something if chatnut isn´t connected yet*/
-			if(!connected)
+	/*only do something if chatnut isn´t connected yet*/
+	if(!connected)
+	{
+		/*ask for server connection data if it was not set yet*/
+		if(!address)
+		{
+			if(!waiting_for_data)
 			{
-					/*ask for server connection data if it was not set yet*/
-   			 if(!address)
-  		  {
-  		     	popup_connect();
-  		  }
-  		  else
-  		  {
-        if(channel)
-        {
-            shutdown_channel();
-            g_io_channel_unref(channel);
-            channel = NULL;
-        }
+				popup_connect();
+				waiting_for_data = TRUE;
+			}
+		}
+		else
+		{
+			if(channel)
+			{
+				shutdown_channel();
+				g_io_channel_unref(channel);
+				channel = NULL;
+			}
 
-        /*this will only be done if connection is lost and channel is NULL*/
-        int sock = create_socket();
-        if( sock > 0 )
-        {
-            connected = connect_socket(&sock, address, port);
-            if(connected)
-            {
-                create_channel(sock);
-                g_io_add_watch( channel, G_IO_IN, channel_in_handle, eval_func );
-            }
-            else
-            {
-                close_socket(&sock);
-            }
-        }
-		   }
+			/*this will only be done if connection is lost and channel is NULL*/
+			int sock = create_socket();
+			if( sock > 0 )
+			{
+				connected = connect_socket(&sock, address, port);
+				if(connected)	//chatnut is now connected to a server
+				{
+					create_channel(sock);
+					g_io_add_watch( channel, G_IO_IN, channel_in_handle, eval_func );
+				}
+				else		//connection failed, ask for data again
+				{
+					free(address);
+					address = NULL;
+					port = 0;
+					waiting_for_data = FALSE;
+					close_socket(&sock);
+				}
+			}
+		}
+	}
 
-    return G_SOURCE_REMOVE;		//no other function called  by the signal that calls this one, so we might as well remove the signal TODO check comment and return value
+	return G_SOURCE_CONTINUE;	//don't remove this event's source (for now). If you do, this function isn't called
 }
 
 /*free and reset connection data*/
-void cleanup_connection_data(void)
+extern void cleanup_connection_data(void)
 {
 	free(address);
 	address = NULL;

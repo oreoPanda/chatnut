@@ -29,6 +29,7 @@ extern int create_socket(void)
 	sock = socket( PF_INET, SOCK_STREAM, 0 );
 	if( sock < 0 )		//check if it worked
 	{
+		//TODO use error() from logger.c
 		print_error("Error creating socket");
 	}
 
