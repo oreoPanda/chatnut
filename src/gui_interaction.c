@@ -187,9 +187,9 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
 	char *contact_name = NULL;
 	char *history = NULL;
 
-	if( data != NULL )
+	if( data != NULL )//TODO check other args too
 	{
-		fprintf( stderr, "(contact_selection_handler): gpointer data is non-NULL but not used.\n" );
+		callback_warn();
 	}
 
 	selection = gtk_tree_view_get_selection(treeview);
@@ -293,7 +293,7 @@ extern gboolean add_contact_button_press(GtkButton *button, gpointer data)
 
 static void callback_warn(void)
 {
-	fprintf(stderr, "[GUI Callback Warning] Unexpected argument.\n");
+	fprintf(stderr, "[GUI Callback Warning] Unexpected argument in callback.\n");
 	return;
 }
 >>>>>>> fa040bcd4dd42aacf1b0266dc59ac82f2091e390

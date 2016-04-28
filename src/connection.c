@@ -15,6 +15,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
+//TODO this is part of chatnut
+
 #include "connection.h"
 #include "connection_raw.h"
 
@@ -282,6 +284,7 @@ static void shutdown_channel(void)
 	return;
 }
 
+//check that this callback isn't rec%nnected indefinitely
 static gboolean channel_in_handle( GIOChannel *source, GIOCondition condition, gpointer eval_func )
 {
     int read_status = FAILURE;
@@ -338,8 +341,16 @@ extern void set_connection_data(const char *addr, unsigned short p)
 
 extern gboolean watch_connection(gpointer eval_func)
 {
-    if(!connected && address)  //if not connected and if address has been set, has to be connected
-    {
+			/*only do something if chatnut isn´t connected yet*/
+			if(!connected)
+			{
+					/*ask for server connection data if it was not set yet*/
+   			 if(!address)
+  		  {
+  		     	popup_connect();
+  		  }
+  		  else
+  		  {
         if(channel)
         {
             shutdown_channel();
@@ -362,9 +373,9 @@ extern gboolean watch_connection(gpointer eval_func)
                 close_socket(&sock);
             }
         }
-    }
+		   }
 
-    return G_SOURCE_CONTINUE;   //this callback should not be removed
+    return G_SOURCE_REMOVE;		//no other function called  by the signal that calls this one, so we might as well remove the signal TODO check comment and return value
 }
 
 /*free and reset connection data*/
