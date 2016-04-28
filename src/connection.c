@@ -326,14 +326,16 @@ static gboolean channel_in_handle( GIOChannel *source, GIOCondition condition, g
 
 /*sets the variables address and port*/
 //TODO check, strncpy
-extern void set_connection_data(char *addr, unsigned short p)
+extern void set_connection_data(const char *addr, unsigned short p)
 {
-	address = calloc(address, strlen(addr)+1, sizeof(char));
-	strncpy(addr, strlen(addr)+1, address);
+	free(address);  //only frees if non-null
+	address = calloc(strlen(addr)+1, sizeof(char));
+	strncpy(address, addr, strlen(addr)+1);
 	port = p;
 	
 	return;
 }
+
 extern gboolean watch_connection(gpointer eval_func)
 {
     if(!connected && address)  //if not connected and if address has been set, has to be connected
@@ -363,4 +365,12 @@ extern gboolean watch_connection(gpointer eval_func)
     }
 
     return G_SOURCE_CONTINUE;   //this callback should not be removed
+}
+
+/*free and reset connection data*/
+void cleanup_connection_data(void)
+{
+	free(address);
+	address = NULL;
+	port = 0;
 }
