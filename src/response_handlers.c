@@ -21,7 +21,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <string.h>
 #include <errno.h>
 
-gboolean was_logged_in = true;
+gboolean was_logged_in = TRUE;
 
 extern void handle_buddy_is_set(void)
 {

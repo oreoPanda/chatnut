@@ -28,8 +28,8 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 extern gboolean channel_not_null(void);
 extern gboolean read_line_from_channel(char **line);
-extern void write_to_channel( const gchar *buf, const char *username );
-extern void set_connection_data(char *addr, unsigned short p);
+extern void write_to_channel(const gchar *buf, const char *username);
+extern void set_connection_data(const char *addr, unsigned short p);
 extern gboolean watch_connection(gpointer data);
 extern void cleanup_connection_data(void);
 

@@ -15,6 +15,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
+//TODO in callbacks that send something to server, check that no memory leaks occur by checking/not checking if connected to server
+
 #include "gui_interaction.h"
 #include "gui.h"
 #include "connection.h"
@@ -24,6 +26,13 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
+
+//TODO remove when logger.c is completed
+static void callback_warn(void)
+{
+	fprintf(stderr, "[GUI Callback Warning] Unexpected argument in callback.\n");
+	return;
+}
 
 //get data from the Connect dialog and set it so that connecting is possible
 extern gboolean connect_callback(GtkDialog *dialog, gint response_id, gpointer data)
@@ -36,35 +45,42 @@ extern gboolean connect_callback(GtkDialog *dialog, gint response_id, gpointer d
 	{
 		case GTK_RESPONSE_OK:
 		{
-			//get entries from dialog...
+			//get entries from dialog
 			GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
 			GList *elements = gtk_container_get_children(GTK_CONTAINER(content_area));
 			GtkEntry *address_entry = elements->data;
 			elements = elements->next;
 			GtkEntry *port_entry = elements->data;
 
-			//get text from entries... TODO check types when getting port
+			//get text from entries
 			const char *buf = gtk_entry_get_text(port_entry);
 			char *end = NULL;
 			errno = 0;
-			long p = strtol(buf, &end, 10);
-			//check for valid port
-			if(end != buf && *end == '\0' && errno != ERANGE && (p >= 0 && p <= USHRT_MAX) )
+			long port = strtol(buf, &end, 10);
+
+			//check for valid port, if it is valid store address and port
+			if(end != buf && *end == '\0' && errno != ERANGE && (port >= 0 && port <= USHRT_MAX) )
 			{
-				set_connection_data(gtk_entry_get_text(address_entry), port);
+				set_connection_data(gtk_entry_get_text(address_entry), (unsigned short)port);
 			}
+			//in case of an invalid port, pop up the connect dialog again
 			else
 			{
 				popup_connect();
 			}
+
+			break;
 		}
 		default:
-   { 
+		{
             //TODO use a different error report for this, print_error is for connection_raw.c and should not be in connection_raw.h. suggestion: gtkdialog response warning
             fprintf( stderr, "Unhandled response id for GtkDialog.\n" );
 
             break;
         }
+	}
+
+	return G_SOURCE_CONTINUE;
 }
 
 //ask the server if the requested contact exists, gets called by the Add Contact dialog
@@ -85,23 +101,18 @@ extern gboolean add_contact( GtkDialog *dialog, gint response_id, gpointer data 
             /*ask server if the given contact exists*/
             commandlen = strlen("/lookup ") + strlen(contact) + 1;	//strlen + space for NULL
             command = calloc( commandlen, sizeof(char) );
-            strncpy( command, "/lookup ", 9 );	//"/who " + NULL
+            strncpy( command, "/lookup ", 9 );	//"/lookup " + NULL
             strncat( command, contact, strlen(contact) );
-            //TODO check is over-engineering or? actually no, since server may leave before user clicks "Add Contact" button
             if( channel_not_null() )
             {
                 write_to_channel( command, NULL );
             }
             free(command);
 
-            //gtk_widget_destroy(GTK_WIDGET(dialog));
-
             break;
         }
         case GTK_RESPONSE_CANCEL:
         {
-            //gtk_widget_destroy(GTK_WIDGET(dialog));
-
             break;
         }
         default:
@@ -112,7 +123,7 @@ extern gboolean add_contact( GtkDialog *dialog, gint response_id, gpointer data 
             break;
         }
     }
-    return G_SOURCE_REMOVE;
+    return G_SOURCE_CONTINUE;
 }
 
 /*tell the server our login data, gets called by the login dialog*/
@@ -120,10 +131,6 @@ extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
 {
     int commandlen = 0;
     char *command = NULL;
-    GtkWidget *content_area = NULL;
-    GList *list_of_elements = NULL;
-    GtkWidget *username_entry = NULL;
-    GtkWidget *password_entry = NULL;
     
     if( data )
     {
@@ -134,14 +141,14 @@ extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
     if( response_id == GTK_RESPONSE_OK )
     {
         /*get elements inside the widgets content area, which is a GtkBox, which is a GtkContainer*/
-        content_area = gtk_dialog_get_content_area(dialog);
-        elements = gtk_container_get_children(GTK_CONTAINER(content_area));
+        GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
+        GList *elements = gtk_container_get_children(GTK_CONTAINER(content_area));
 
-        username_entry = elements->data;
+        GtkEntry *username_entry = elements->data;
         elements = elements->next;
-        password_entry = elements->data;
+        GtkEntry *password_entry = elements->data;
         
-        /*check const and so on*/
+        //get text from entries
         const char *username = gtk_entry_get_text(username_entry);
         const char *password = gtk_entry_get_text(password_entry);
 
@@ -168,14 +175,14 @@ extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
 
         free(command);
 
-        //gtk_widget_destroy(GTK_WIDGET(dialog));
     }
     else	//not GTK_RESPONSE_OK
     {
+    	//TODO use future warn() function in upcoming logger.c
         fprintf( stdout, "Warning, The login dialog sent response_id not equal to GTK_RESPONSE_OK\n" );
     }
 
-    return G_SOURCE_REMOVE;
+    return G_SOURCE_CONTINUE;
 }
 
 //TODO error when /who fails
@@ -278,8 +285,6 @@ extern gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event
 		}
 	}
 }
-<<<<<<< HEAD
-=======
 
 extern gboolean add_contact_button_press(GtkButton *button, gpointer data)
 {
@@ -289,11 +294,6 @@ extern gboolean add_contact_button_press(GtkButton *button, gpointer data)
 	}
 	
 	popup_add_contact();
-}
 
-static void callback_warn(void)
-{
-	fprintf(stderr, "[GUI Callback Warning] Unexpected argument in callback.\n");
-	return;
+	return G_SOURCE_REMOVE;	//TODO check
 }
->>>>>>> fa040bcd4dd42aacf1b0266dc59ac82f2091e390

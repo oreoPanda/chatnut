@@ -15,6 +15,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
+//TODO check that signal connection is done correctly and doesn't leave any leaks and that return values of callbacks are ok
+
 #include "gui.h"
 #include "gui_interaction.h"
 #include "user.h"
@@ -425,7 +427,7 @@ extern gboolean window_contains_label(void)
 }
 
 //login popup, no cancel button
-extern gboolean popup_login()
+extern void popup_login()
 {
     GtkWidget *dialog_content_area = NULL,
                 *username_entry_field = NULL,
@@ -451,11 +453,11 @@ extern gboolean popup_login()
     gtk_box_pack_start( GTK_BOX(dialog_content_area), password_entry_field, FALSE, FALSE, 0 );
     gtk_dialog_add_button( GTK_DIALOG(dialog_login),  "OK/Login", GTK_RESPONSE_OK );
 
-    /*connect the "response" signal TODO check order and remove destroycommets in guiinteraction*/
+    /*connect the "response" signal*/
     g_signal_connect( GTK_DIALOG(dialog_login), "response", G_CALLBACK(login), NULL );
     g_signal_connect_swapped( GTK_DIALOG(dialog_login), "response", G_CALLBACK(gtk_widget_destroy), dialog_login);
 
-    return G_SOURCE_REMOVE;
+    return;
 }
 
 //Connect popup, no cancel button and not always in front
@@ -467,38 +469,36 @@ extern void popup_connect()
     
     /*dialog*/
     dialog_connect = gtk_dialog_new();
-<<<<<<< HEAD
 
-    //what is transient? TODO
+    //set it to transient (belongs to window below, may not outlast it and is always on top) and modal (window below won't react)
     gtk_window_set_transient_for(GTK_WINDOW(dialog_connect), GTK_WINDOW(window) );
-=======
-    gtk_dialog_set_input_purpose(GTK_INPUT_PURPOSE_DIGITS);
-   
-   //what is transient? TODO
-gtk_window_set_transient_for(GTK_WINDOW(dialog_connect), GTK_WINDOW(window) );
->>>>>>> fa040bcd4dd42aacf1b0266dc59ac82f2091e390
-    //gtk_window_set_attached_to(GTK_WINDOW(dialog_login), window );
+    gtk_window_set_modal(GTK_WINDOW(dialog_connect), TRUE);
     dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_connect));
 
     /*address entry*/
     address_entry_field = gtk_entry_new();
+    gtk_entry_set_input_purpose(GTK_ENTRY(address_entry_field), GTK_INPUT_PURPOSE_URL);
 
     /*port entry*/
     port_entry_field = gtk_entry_new();
+    gtk_entry_set_input_purpose(GTK_ENTRY(port_entry_field), GTK_INPUT_PURPOSE_DIGITS);
 
     /*pack*/
     gtk_box_pack_start( GTK_BOX(dialog_content_area), address_entry_field, FALSE, FALSE, 0 );
     gtk_box_pack_start( GTK_BOX(dialog_content_area), port_entry_field, FALSE, FALSE, 0 );
     gtk_dialog_add_button( GTK_DIALOG(dialog_connect),  "OK/Login", GTK_RESPONSE_OK );
 
-    /*connect the "response" signal TODO check order and remove destroycommets in guiinteraction*/
-    g_signal_connect( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(set_connection_data), NULL);
+    /*connect the "response" signal*/
+    g_signal_connect( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(connect_callback), NULL);
     g_signal_connect_swapped( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(gtk_widget_destroy), dialog_connect);
     
     //show
     gtk_widget_show(address_entry_field);
     gtk_widget_show(port_entry_field);
     gtk_widget_show(dialog_connect);
+
+    //we no longer need the pointer to the dialog, the callbacks have it if they need it
+    dialog_connect = NULL;
 
     return;
 }
@@ -510,34 +510,28 @@ extern void popup_add_contact(void)
                 *contact_entry_field = NULL;
     GtkEntryBuffer *field_buffer = NULL;
     
-        /*dialog*/
-        dialog_add_contact = gtk_dialog_new();
-        gtk_window_set_transient_for(GTK_WINDOW(dialog_add_contact), GTK_WINDOW(window) );
-        dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_add_contact));
+	/*dialog*/
+	dialog_add_contact = gtk_dialog_new();
+	gtk_window_set_transient_for(GTK_WINDOW(dialog_add_contact), GTK_WINDOW(window) );
+	dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_add_contact));
 
-        /*entry*/
-        contact_entry_field = gtk_entry_new();
-        field_buffer = gtk_entry_buffer_new( NULL, 0 );
-        gtk_entry_set_buffer( GTK_ENTRY(contact_entry_field), GTK_ENTRY_BUFFER(field_buffer) );
+	/*entry*/
+	contact_entry_field = gtk_entry_new();
+	field_buffer = gtk_entry_buffer_new( NULL, 0 );
+	gtk_entry_set_buffer( GTK_ENTRY(contact_entry_field), GTK_ENTRY_BUFFER(field_buffer) );
 
-        /*start packing (buttons emit the "response" signal when clicked since they are in the action area)*/
-        gtk_box_pack_start( GTK_BOX(dialog_content_area), contact_entry_field, FALSE, FALSE, 0 );
-        gtk_dialog_add_button( GTK_DIALOG(dialog_add_contact), "OK/Add...", GTK_RESPONSE_OK );
-        gtk_dialog_add_button( GTK_DIALOG(dialog_add_contact), "Cancel", GTK_RESPONSE_CANCEL );
+	/*start packing (buttons emit the "response" signal when clicked since they are in the action area)*/
+	gtk_box_pack_start( GTK_BOX(dialog_content_area), contact_entry_field, FALSE, FALSE, 0 );
+	gtk_dialog_add_button( GTK_DIALOG(dialog_add_contact), "OK/Add...", GTK_RESPONSE_OK );
+	gtk_dialog_add_button( GTK_DIALOG(dialog_add_contact), "Cancel", GTK_RESPONSE_CANCEL );
 
-        /*connect the "response" signal TODO order abd guiinteraction*/
-        g_signal_connect( GTK_DIALOG(dialog_add_contact), "response", G_CALLBACK(add_contact), field_buffer );
-        g_signal_connect_swapped( GTK_DIALOG(dialog_add_contact), "response", G_CALLBACK(gtk_widget_destroy), dialog_add_contact);
+	/*connect the "response" signal*/
+	g_signal_connect( GTK_DIALOG(dialog_add_contact), "response", G_CALLBACK(add_contact), field_buffer );
+	g_signal_connect_swapped( GTK_DIALOG(dialog_add_contact), "response", G_CALLBACK(gtk_widget_destroy), dialog_add_contact);
 
-        /*I forgot it again... show the widgets*/
-        gtk_widget_show(dialog_add_contact);
-        gtk_widget_show(contact_entry_field);
+	/*I forgot it again... show the widgets*/
+	gtk_widget_show(dialog_add_contact);
+	gtk_widget_show(contact_entry_field);
 
-<<<<<<< HEAD
-    //TODO return value doesn't seem to matter?
-    return G_SOURCE_REMOVE;
-}
-=======
     return;
 }
->>>>>>> fa040bcd4dd42aacf1b0266dc59ac82f2091e390
