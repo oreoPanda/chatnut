@@ -21,63 +21,43 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "gui.h"
 #include "connection.h"
 #include "file_operations.h"
+#include "logger.h"
 #include "user.h"
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
 
-//TODO remove when logger.c is completed
-static void callback_warn(void)
-{
-	fprintf(stderr, "[GUI Callback Warning] Unexpected argument in callback.\n");
-	return;
-}
-
 //get data from the Connect dialog and set it so that connecting is possible
 extern gboolean connect_callback(GtkDialog *dialog, gint response_id, gpointer data)
 {
-	if(data)
+	if(!dialog || response_id != GTK_RESPONSE_OK || data)
 	{
-		//TODO call warn function (unexpected argument in callback %s\n)
+		warn("GUI Callback", "Unexpected argument while processing server data");
 	}
-	switch(response_id)
+
+	//get entries from dialog
+	GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
+	GList *elements = gtk_container_get_children(GTK_CONTAINER(content_area));
+	GtkEntry *address_entry = elements->data;
+	elements = elements->next;
+	GtkEntry *port_entry = elements->data;
+
+	//get text from entries
+	const char *buf = gtk_entry_get_text(port_entry);
+	char *end = NULL;
+	errno = 0;
+	long port = strtol(buf, &end, 10);
+
+	//check for valid port, if it is valid store address and port
+	if(end != buf && *end == '\0' && errno != ERANGE && (port >= 0 && port <= USHRT_MAX) )
 	{
-		case GTK_RESPONSE_OK:
-		{
-			//get entries from dialog
-			GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
-			GList *elements = gtk_container_get_children(GTK_CONTAINER(content_area));
-			GtkEntry *address_entry = elements->data;
-			elements = elements->next;
-			GtkEntry *port_entry = elements->data;
-
-			//get text from entries
-			const char *buf = gtk_entry_get_text(port_entry);
-			char *end = NULL;
-			errno = 0;
-			long port = strtol(buf, &end, 10);
-
-			//check for valid port, if it is valid store address and port
-			if(end != buf && *end == '\0' && errno != ERANGE && (port >= 0 && port <= USHRT_MAX) )
-			{
-				set_connection_data(gtk_entry_get_text(address_entry), (unsigned short)port);
-			}
-			//in case of an invalid port, pop up the connect dialog again
-			else
-			{
-				popup_connect();
-			}
-
-			break;
-		}
-		default:
-		{
-            //TODO use a different error report for this, print_error is for connection_raw.c and should not be in connection_raw.h. suggestion: gtkdialog response warning
-            fprintf( stderr, "Unhandled response id for GtkDialog.\n" );
-
-            break;
-        }
+		set_connection_data(gtk_entry_get_text(address_entry), (unsigned short)port);
+	}
+	//in case of an invalid port, pop up the connect dialog again
+	else
+	{
+		popup_connect();
 	}
 
 	return G_SOURCE_CONTINUE;
@@ -86,6 +66,11 @@ extern gboolean connect_callback(GtkDialog *dialog, gint response_id, gpointer d
 //ask the server if the requested contact exists, gets called by the Add Contact dialog
 extern gboolean add_contact( GtkDialog *dialog, gint response_id, gpointer data )
 {
+	if(!dialog || !(response_id == GTK_RESPONSE_OK || response_id == GTK_RESPONSE_CANCEL) || data)
+	{
+		warn("GUI Callback", "Unexpected argument while processing new contact data");
+	}
+
     switch(response_id)
     {
         case GTK_RESPONSE_OK:
@@ -115,14 +100,8 @@ extern gboolean add_contact( GtkDialog *dialog, gint response_id, gpointer data 
         {
             break;
         }
-        default:
-        {
-            //TODO use a different error report for this, print_error is for connection_raw.c and should not be in connection_raw.h
-            fprintf( stderr, "Unhandled response id for GtkDialog.\n" );
-
-            break;
-        }
     }
+
     return G_SOURCE_CONTINUE;
 }
 
@@ -132,55 +111,45 @@ extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
     int commandlen = 0;
     char *command = NULL;
     
-    if( data )
+    if(!dialog || response_id != GTK_RESPONSE_OK || data)
     {
-    	//TODO warn
-        fprintf( stderr, "(login) Ignoring data passed as gpointer.\n" );
+    	warn("GUI Callback", "Unexpected argument while processing login data");
     }
 
-    if( response_id == GTK_RESPONSE_OK )
-    {
-        /*get elements inside the widgets content area, which is a GtkBox, which is a GtkContainer*/
-        GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
-        GList *elements = gtk_container_get_children(GTK_CONTAINER(content_area));
+	/*get elements inside the widgets content area, which is a GtkBox, which is a GtkContainer*/
+	GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
+	GList *elements = gtk_container_get_children(GTK_CONTAINER(content_area));
 
-        GtkEntry *username_entry = elements->data;
-        elements = elements->next;
-        GtkEntry *password_entry = elements->data;
-        
-        //get text from entries
-        const char *username = gtk_entry_get_text(username_entry);
-        const char *password = gtk_entry_get_text(password_entry);
+	GtkEntry *username_entry = elements->data;
+	elements = elements->next;
+	GtkEntry *password_entry = elements->data;
 
-        /*create and send login command to server*/
-        commandlen = strlen("/login ")
-                                + strlen(username)
-                                + 1			//space
-                                + strlen(password)
-                                + 1;		//NULL
-        command = calloc( commandlen, sizeof(char) );
-        strncpy( command, "/login ", 8 );	//"/login " + NULL
-        strncat( command, username, strlen(username) );
-        strncat( command, " ", 1 );
-        strncat( command, password, strlen(password) );
+	//get text from entries
+	const char *username = gtk_entry_get_text(username_entry);
+	const char *password = gtk_entry_get_text(password_entry);
 
-        //TODO test what happens here when server leaves while user types in username and password
-                //thought: server leaves, this command is written, G_IO_CHANNEL_HUNGUP gets emitted but not handled
-                        //next thing that happens is a read with 0 (EOF), and client should work normally
-        //TODO for over-engineering, see function above
-        if( channel_not_null() )
-        {
-            write_to_channel( command, NULL );
-        }
+	/*create and send login command to server*/
+	commandlen = strlen("/login ")
+							+ strlen(username)
+							+ 1			//space
+							+ strlen(password)
+							+ 1;		//NULL
+	command = calloc( commandlen, sizeof(char) );
+	strncpy( command, "/login ", 8 );	//"/login " + NULL
+	strncat( command, username, strlen(username) );
+	strncat( command, " ", 1 );
+	strncat( command, password, strlen(password) );
 
-        free(command);
+	//TODO test what happens here when server leaves while user types in username and password
+			//thought: server leaves, this command is written, G_IO_CHANNEL_HUNGUP gets emitted but not handled
+					//next thing that happens is a read with 0 (EOF), and client should work normally
+	//TODO for over-engineering, see function above
+	if( channel_not_null() )
+	{
+		write_to_channel( command, NULL );
+	}
 
-    }
-    else	//not GTK_RESPONSE_OK
-    {
-    	//TODO use future warn() function in upcoming logger.c
-        fprintf( stdout, "Warning, The login dialog sent response_id not equal to GTK_RESPONSE_OK\n" );
-    }
+	free(command);
 
     return G_SOURCE_CONTINUE;
 }
@@ -194,9 +163,9 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
 	char *contact_name = NULL;
 	char *history = NULL;
 
-	if( data != NULL )//TODO check other args too
+	if(!treeview || treepath || column || data)
 	{
-		callback_warn();
+		warn("GUI Callback", "Unexpected argument while processing contact selection");
 	}
 
 	selection = gtk_tree_view_get_selection(treeview);
@@ -241,11 +210,12 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
 	return;
 }
 
+//TODO isn't there some kind of signal that just gets emitted on press of Return key?
 extern gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event, gpointer data )
 {
-	if(event->type != GDK_KEY_PRESS || data)
+	if(!inputview || event->type != GDK_KEY_PRESS || data)
 	{
-		callback_warn();
+		warn("GUI Callback", "Unexpected argument while handling keypress in the message input field");
 	}
 	
 	guint keyval;
@@ -290,7 +260,7 @@ extern gboolean add_contact_button_press(GtkButton *button, gpointer data)
 {
 	if(!button || data)
 	{
-		callback_warn();
+		warn("GUI Callback", "Unexpected argument while processing a button-press on the \"Add Contact\" button");
 	}
 	
 	popup_add_contact();

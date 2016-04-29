@@ -43,7 +43,7 @@ extern gboolean channel_not_null(void)
 static void create_channel(int fd)
 {
     GIOStatus status;
-    GError *error = NULL;
+    GError *err = NULL;
 
     channel = g_io_channel_unix_new(fd);
     if( !channel )
@@ -52,7 +52,7 @@ static void create_channel(int fd)
         error("Connection", "Unable to create GIOChannel");
         return;
     }
-    while( (status = g_io_channel_set_encoding( channel, NULL, &error )) == G_IO_STATUS_AGAIN )
+    while( (status = g_io_channel_set_encoding( channel, NULL, &err )) == G_IO_STATUS_AGAIN )
     {
         warn("Connection", "Trying again to set encoding on GIOChannel");
     }
@@ -68,12 +68,12 @@ static void create_channel(int fd)
             break;
         }
     }
-    if(error)
+    if(err)
     {
-        error("Connection", error->message);
+        error("Connection", err->message);
     }
 
-    log("Connection", "Created a GIOChannel");
+    logg("Connection", "Created a GIOChannel");
 
     return;
 }
@@ -84,12 +84,12 @@ extern gboolean read_line_from_channel(char **line)
 	GIOStatus status;
 	gsize length = NULL;	//the length of read data will go here
 	gsize line_terminator_pos = NULL;	//position of '\n' will go here (both gsizes will be NULL if no data read)
-	GError *error = NULL;
+	GError *err = NULL;
 	gboolean return_value = SUCCESS;
 
-	while( (status = g_io_channel_read_line( channel, line, &length, &line_terminator_pos, &error )) == G_IO_STATUS_AGAIN )
+	while( (status = g_io_channel_read_line( channel, line, &length, &line_terminator_pos, &err )) == G_IO_STATUS_AGAIN )
 	{
-		warn("Connction", "Trying again to read line from GIOChannel");
+		warn("Connection", "Trying again to read line from GIOChannel");
 	}
 	switch(status)
 	{
@@ -114,10 +114,10 @@ extern gboolean read_line_from_channel(char **line)
 			break;
 		}
 	}
-	if(error)
+	if(err)
 	{
-		error("Connection", error->message);
-		error = NULL;//free()? TODO
+		error("Connection", err->message);
+		err = NULL;//free()? TODO
 	}
 
 	/*replace line terminator with NULL*/
@@ -139,7 +139,7 @@ extern void write_to_channel( const char *message, const char *username )
 	gssize length_of_data;
 	gchar length_str[4];
 	gsize bytes_written;
-	GError *error = NULL;
+	GError *err = NULL;
 
 	/*calculate length of data that is to be sent TODO note somewhere that the word length always excludes \0*/
 	if(username)
@@ -177,7 +177,7 @@ extern void write_to_channel( const char *message, const char *username )
 	}
 
 	/*send the completed data*/
-	while( (status = g_io_channel_write_chars( channel, data, length_of_data, &bytes_written, &error )) == G_IO_STATUS_AGAIN )
+	while( (status = g_io_channel_write_chars( channel, data, length_of_data, &bytes_written, &err )) == G_IO_STATUS_AGAIN )
 	{
 		warn("Connection", "Trying again to write to GIOChannel");
 	}
@@ -208,10 +208,10 @@ extern void write_to_channel( const char *message, const char *username )
 	{
 		warn("Connection", "Not all bytes were written to GIOChannel");
 	}
-	if(error)
+	if(err)
 	{
-		error("Connection", error->message);
-		error = NULL;
+		error("Connection", err->message);
+		err = NULL;	//TODO free?
 	}
 
 	/*free data since it is no longer needed*/
@@ -221,9 +221,9 @@ extern void write_to_channel( const char *message, const char *username )
 	data = NULL;
 
 	/*flush the channel*/
-	while( (status = g_io_channel_flush( channel, &error )) == G_IO_STATUS_AGAIN )
+	while( (status = g_io_channel_flush(channel, &err) ) == G_IO_STATUS_AGAIN )
 	{
-		warn("Connection", "Trying again to flush GIOChannel")
+		warn("Connection", "Trying again to flush GIOChannel");
 	}
 	switch(status)
 	{
@@ -242,10 +242,10 @@ extern void write_to_channel( const char *message, const char *username )
 			break;
 		}
 	}
-	if(error)
+	if(err)
 	{
-		error("Connection", error->message);
-		error = NULL;//TODO free?
+		error("Connection", err->message);
+		err = NULL;//TODO free?
 	}
 
 	return;
@@ -255,9 +255,9 @@ static void shutdown_channel(void)
 {
 	GIOStatus status;
 	gboolean flush = FALSE;
-	GError *error = NULL;
+	GError *err = NULL;
 
-	while( (status = g_io_channel_shutdown( channel, flush, &error )) == G_IO_STATUS_AGAIN )
+	while( (status = g_io_channel_shutdown(channel, flush, &err) ) == G_IO_STATUS_AGAIN )
 	{
 		warn("Connection", "Trying again to shut down GIOChannel");
 	}
@@ -266,7 +266,7 @@ static void shutdown_channel(void)
 	{
 		case G_IO_STATUS_NORMAL:
 		{
-			log("Connection", "Successfully shut down GIOChannel");
+			logg("Connection", "Successfully shut down GIOChannel");
 			break;
 		}
 		case G_IO_STATUS_EOF:
@@ -286,16 +286,16 @@ static void shutdown_channel(void)
 		}
 	}
 
-	if(error)
+	if(err)
 	{
-		error("Connection", error->message);
-		g_error_free(error);//TODO?
+		error("Connection", err->message);
+		g_error_free(err);//TODO?
 	}
 
 	return;
 }
 
-//check that this callback isn't rec%nnected indefinitely
+//check that this callback isn't reconnected indefinitely
 static gboolean channel_in_handle( GIOChannel *source, GIOCondition condition, gpointer eval_func )
 {
 		if(source != channel || condition != G_IO_IN || !eval_func)

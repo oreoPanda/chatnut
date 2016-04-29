@@ -19,6 +19,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "gui.h"
 #include "gui_interaction.h"
+#include "logger.h"
 #include "user.h"
 #include <stdlib.h>
 #include <string.h>
@@ -127,11 +128,6 @@ extern void create_history_view(void)
     gtk_text_view_set_editable( GTK_TEXT_VIEW(history_view), FALSE );
     gtk_text_view_set_cursor_visible( GTK_TEXT_VIEW(history_view), FALSE );
     gtk_text_view_set_wrap_mode( GTK_TEXT_VIEW(history_view), GTK_WRAP_WORD_CHAR );
-
-    /* Change default color throughout the widget */
-    GdkRGBA rgba;
-    gdk_rgba_parse( &rgba, "green" );
-    gtk_widget_override_color( history_view, GTK_STATE_FLAG_NORMAL, &rgba );
 
     gtk_widget_show(history_view);
 

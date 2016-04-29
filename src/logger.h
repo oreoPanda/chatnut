@@ -23,8 +23,10 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <string.h>
 
 extern void error(const char *cat, const char *msg);
-extern void log(const char *cat, const char *msg);
+extern void logg(const char *cat, const char *msg);
 extern void warn(const char *cat, const char *msg);
+
+extern void logger_init(void);
 
 extern void set_error(const char *filename);
 extern void set_log(const char *filename);

@@ -48,7 +48,7 @@ enum reply
 };
 
 /*returns a pointer to the part of message where the actual message begins, this pointer should not be freed separately from message*/
-const char *strip_buddyname( const char *message, char **buddyname )
+const char *strip_buddyname(const char *message, char **buddyname)
 {
     int namelength = -1;
 
@@ -94,21 +94,21 @@ static void evaluate_incoming(const char *data)
 	{
 		case CONNECTED:
 		{
-			log("Server Reply", "Connected");
+			logg("Server Reply", "Connected");
 
 			popup_login();
 			break;
 		}
 		case LOGIN_FAILURE:
 		{
-			log("Server Reply", "Login failure");
+			logg("Server Reply", "Login failure");
 
 			popup_login();
 			break;
 		}
 		case LOGIN_SUCCESS:
 		{
-			log("Server reply", "Login success");
+			logg("Server reply", "Login success");
 
 			/*get buddyname string*/
 			char *buddyname = NULL;
@@ -120,32 +120,32 @@ static void evaluate_incoming(const char *data)
 		}
 		case BUDDY_IS_SET:
 		{
-			log("Server Reply", "Buddy is now set");
+			logg("Server Reply", "Buddy is now set");
 			enable_input_view();
 
 			break;
 		}
 		case BUDDY_IS_UNSET:
 		{
-			log("Server Reply", "Buddy is now unset");
+			logg("Server Reply", "Buddy is now unset");
 
 			break;
 		}
 		case BUDDY_NOT_EXIST:		//TODO could maybe take out this one
 		{
-			log("Server Reply", "Buddy does not exist");
+			logg("Server Reply", "Buddy does not exist");
 
 			break;
 		}
 		case LOOKUP_FAILURE:
 		{
-			log("Server Reply", "User does not exist");
+			logg("Server Reply", "User does not exist");
 			break;
 		}
 		/*process of choosing buddy works, code analysis needs to be done TODO*/
 		case LOOKUP_SUCCESS:
 		{
-			log("Server Reply", "User exists");
+			logg("Server Reply", "User exists");
 			/*get buddyname string*/
 			char *buddyname = NULL;
 			strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, buddyname should be free()d
@@ -161,7 +161,7 @@ static void evaluate_incoming(const char *data)
 			const char *raw_message = strip_buddyname( message, &buddy_username );//raw_message should not be freed, username should be
 
 			//TODO I got up to here checking the process of an incoming message, continue checking below this line
-			log("Message from %s", "%s", buddy_username, raw_message);
+			logg("Server Reply", "New message");
 
 			/*append the actual message to history*/
 			append_to_history( raw_message, buddy_username, TRUE );
@@ -191,6 +191,7 @@ static void evaluate_incoming(const char *data)
 int main( int argc, char *argv[] )
 {
     gtk_init( &argc, &argv );
+    logger_init();
     g_timeout_add_seconds( 1, watch_connection, evaluate_incoming );	//TODO might be smart to stop this once connected and reinitiate this by connection breaks
     if( init_chatnut_directory() != 0 )
     {

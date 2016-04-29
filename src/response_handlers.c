@@ -64,11 +64,12 @@ extern void handle_login_success(const char *username)
     /*check if somebody was logged in previously*/
     if(was_logged_in)
     {
- 				chdir("../");
+ 		chdir("../");
     }
     /*initialize the users directory*/
     if( init_user_directory() != 0 )
     {
+    	//TODO don't change the GUI to logged in if this step doesn't work...
         fprintf( stderr, "Error initializing the users directory and files in $HOME/.chatnut. Did the permissions change?\n" );
     }
 

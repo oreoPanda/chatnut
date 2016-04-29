@@ -15,33 +15,59 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
-//TODO here and in shutdown_logger() check if stderr and stdout can be a FILE
-
 #include "logger.h"
 
-FILE *ef = stderr, *lf = stdout, *wf = stdout;
+FILE *ef = NULL, *lf = NULL, *wf = NULL;
 
 extern void error(const char *cat, const char *msg)
 {
-	fprintf(ef, "[%s] %s: %s.\n", cat, msg, strerror(errno));
+	if(ef)
+	{
+		fprintf(ef, "[%s Error] %s: %s.\n", cat, msg, strerror(errno));
+	}
+	else
+	{
+		fprintf(stderr, "[%s Error] %s: %s.\n", cat, msg, strerror(errno));
+	}
 	return;
 }
 
-extern void log(const char *cat, const char *msg)
+extern void logg(const char *cat, const char *msg)
 {
-	fprintf(lf, "[%s] %s.\n", cat, msg);
+	if(lf)
+	{
+		fprintf(lf, "[%s] %s.\n", cat, msg);
+	}
+	else
+	{
+		fprintf(stdout, "[%s] %s.\n", cat, msg);
+	}
 	return;
 }
 
 extern void warn(const char *cat, const char *msg)
 {
-	fprintf(wf, "[%s] %s.\n", cat, msg);
+	if(wf)
+	{
+		fprintf(wf, "[%s Warning] %s.\n", cat, msg);
+	}
+	else
+	{
+		fprintf(stdout, "[%s Warning] %s.\n", cat, msg);
+	}
 	return;
+}
+
+extern void logger_init(void)
+{
+	ef = stderr;
+	lf = stdout;
+	wf = stdout;
 }
 
 extern void set_error(const char *filename)
 {
-	if(!(ef = fopen(filename)) )
+	if(!(ef = fopen(filename, "a")) )
 	{
 		error("Logger", "Unable to open file for errors");
 		ef = stderr;
@@ -52,7 +78,7 @@ extern void set_error(const char *filename)
 
 extern void set_log(const char *filename)
 {
-	if( !(lf = fopen(filename)) )
+	if( !(lf = fopen(filename, "a")) )
 	{
 		error("Logger", "Unable to open file for log messages");
 		lf = stdout;
@@ -63,7 +89,7 @@ extern void set_log(const char *filename)
 
 extern void set_warn(const char *filename)
 {
-	if( !(wf = fopen(filename)) )
+	if( !(wf = fopen(filename, "a")) )
 	{
 		error("Logger", "Unable to open file for warnings");
 		wf = stdout;
@@ -76,17 +102,32 @@ extern void shutdown_logger(void)
 {
 	if(ef != stderr)
 	{
-		fclose(ef);
+		errno = 0;
+		int s = fclose(ef);
 		ef = stderr;
+		if(s != 0)
+		{
+			error("Logger", "Encountered error while closing file for errors");
+		}
 	}
 	if(lf != stdout)
 	{
-		fclose(lf);
+		errno = 0;
+		int s = fclose(lf);
 		lf = stdout;
+		if(s != 0)
+		{
+			error("Logger", "Encountered error while closing file for logs");
+		}
 	}
 	if(wf != stdout)
 	{
-		fclose(wf);
+		errno = 0;
+		int s = fclose(wf);
 		wf = stdout;
+		if(s != 0)
+		{
+			error("Logger", "Encountered error while closing file for warnings");
+		}
 	}
 }

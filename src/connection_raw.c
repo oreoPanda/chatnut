@@ -88,14 +88,14 @@ extern int connect_socket(socket_t *sock, char *server_addr, unsigned short port
 	else
 	{
 		//say who the client is connected to
-		log("Connection Backend", "Connected to server");
+		logg("Connection Backend", "Connected to server");
 		return TRUE;
 	}
 }
 
 extern void close_socket( socket_t *sock )
 {
-	log("Connection Backend", "Closing socket");
+	logg("Connection Backend", "Closing socket");
 	errno = 0;
 	if( close(*sock) < 0 )
 	{
