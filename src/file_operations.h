@@ -20,11 +20,13 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <gtk/gtk.h>
 
+extern char *generate_path(const char *userdir, const char *subdir, const char *filename);
 extern GtkListStore *create_contact_list_model(void);
 extern gboolean add_contact_to_list(const char *contact);
-extern gboolean load_file( const char *dir, const char *name, char **to );
-extern void append_to_history( const char *message, const char *buddyname, gboolean received );
-extern int init_chatnut_directory(void);
+extern gboolean load_file(const char *name, char **to);
+extern void append_to_history(const char *message, const char *buddyname, gboolean received);
+extern int enter_chatnut_directory(void);
+extern void exit_chatnut_directory(void);
 extern int init_user_directory(void);
 
 #endif /* FILE_OPERATIONS_H */

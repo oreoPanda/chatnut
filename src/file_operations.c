@@ -24,7 +24,37 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "logger.h"
 #include "user.h"
 
-static size_t separate_lines( const char *raw, char ***lines );
+static size_t separate_lines(const char *raw, char ***lines);
+
+/*generates a path according to the arguments. subdir may be NULL. the returned string shall be freed after usage*/
+extern char *generate_path(const char *userdir, const char *subdir, const char *filename)
+{
+	if(!userdir || !filename)
+	{
+		warn("File IO", "Unable to generate a path without a directory and a filename");
+		return NULL;
+	}
+
+	int pathlen = 0;
+	char *path = NULL;
+
+	/*calculate length (with or without subdir) and allocate enough space*/
+	pathlen = strlen(userdir) + 1 + (subdir ? strlen(subdir)+1 : 0) + strlen(filename) + 1;
+	path = calloc(pathlen, sizeof(char) );
+
+	/*copy data into path*/
+	strncpy(path, userdir, strlen(userdir) +1 );
+	strncat(path, "/", 1);
+	if(subdir)
+	{
+		strncat(path, subdir, strlen(subdir) );
+		strncat(path, "/", 1);
+	}
+	strncat(path, filename, strlen(filename) );
+	strncat(path, "/", 1);
+
+	return path;
+}
 
 /*loads contacts from file into a GtkListStore*/
 extern GtkListStore *create_contact_list_model(void)
@@ -36,25 +66,31 @@ extern GtkListStore *create_contact_list_model(void)
     char **contacts = NULL;
     int count = 0;
 
+    char *path = generate_path(get_username(), NULL, "contactlist");
+
     /*load contact list from file*/
-    if( load_file( NULL, "contactlist", &raw_list ) )
+    if(load_file(path, &raw_list) )
     {
-    	count = separate_lines( raw_list, &contacts );
+    	free(path);
+    	path = NULL;
+    	count = separate_lines(raw_list, &contacts);
 
         /*create contact list model with name and online status for each contact*/
-        store = gtk_list_store_new( 1, G_TYPE_STRING );
+        store = gtk_list_store_new(1, G_TYPE_STRING);
 
 		/*add contacts to the list store*/
-        for( int i = 0; i < count; i++ )
+        for(int i = 0; i < count; i++)
         {
-        	gtk_list_store_append( store, &iter );
-        	gtk_list_store_set( store, &iter, 0, *(contacts+i), -1 );
+        	gtk_list_store_append(store, &iter);
+        	gtk_list_store_set(store, &iter, 0, *(contacts+i), -1);
         }
 
         return store;
     }
     else
     {
+    	free(path);
+    	path = NULL;
     	return NULL;
     }
 }
@@ -111,8 +147,10 @@ extern gboolean add_contact_to_list(const char *contact)
 	size_t line_count = 0;
 	gboolean contact_exists = FALSE;
 
+	char *path = generate_path(get_username(), NULL, "contactlist");
+
 	/*load raw contents of the contact file into memory*/
-	if( load_file( NULL, "contactlist", &content ) )
+	if(load_file(path, &content) )
 	{
 		/*separate the raw contents by line*/
 		line_count = separate_lines( content, &contacts );
@@ -137,11 +175,13 @@ extern gboolean add_contact_to_list(const char *contact)
 	}
 
 	/*if contact doesn't exist yet (or if file doesn't exist), open file and write to it*/
-	if( !contact_exists )
+	if(!contact_exists)
 	{
 		errno = 0;
 		FILE *contactfile = NULL;
-		contactfile = fopen("contactlist", "a");
+		contactfile = fopen(path, "a");
+		free(path);
+		path = NULL;
 		if(contactfile)
 		{
 			fprintf( contactfile, "%s\n", contact );
@@ -156,27 +196,19 @@ extern gboolean add_contact_to_list(const char *contact)
 	}
 	else
 	{
+		free(path);
+		path = NULL;
 		logg("File IO", "Contact exists");
 		return FALSE;
 	}
 }
 
 /*load a file with name name into *to, dir specifies a directory or NULL*/
-extern gboolean load_file(const char *dir, const char *name, char **to)
+extern gboolean load_file(const char *name, char **to)
 {
 	FILE *file = NULL;
 	int length = 0;
 	gboolean loaded = FALSE;
-
-	/*switch to directory*/
-	if( dir )
-	{
-		if( chdir(dir) != 0 )
-		{
-			error("File IO", "Unable to switch into user's history directory");
-			return FALSE;
-		}
-	}
 
 	/*open file and read from it*/
 	file = fopen(name, "r");
@@ -211,63 +243,42 @@ extern gboolean load_file(const char *dir, const char *name, char **to)
 		}
 	}
 
-	/*switch back to parent directory*/
-	if( dir )
-	{
-		errno = 0;
-		if(chdir("../") != 0)
-		{
-			//TODO handle this error or change mechanism: don't even enter the directory but specify it in fopen path
-			error("File IO", "Unable to switch out of user's history directory");
-		}
-	}
-
 	return loaded;
 }
 
 /*received should be TRUE when this is a received message, FALSE if user sent it*/
-extern void append_to_history( const char *message, const char *buddyname, gboolean received )//rename buddyname to filename
+extern void append_to_history(const char *message, const char *buddyname, gboolean received)//rename buddyname to filename
 {
     FILE *historyfile = NULL;
-    const char *filename = buddyname;
-    const char *path = "history";
-    
-    errno = 0;
-    /*switch to directory*/
-    if( chdir(path) != 0 )
-    {
-        error("File IO", "Unable to switch into user's history directory");
-        return;
-    }
+    char *path = generate_path(get_username(), "history", buddyname);
 
     errno = 0;
     /*open file and write to it*/
-    historyfile = fopen( filename, "a" );		//NULL check if file not found (errno)
+    historyfile = fopen(path, "a");		//NULL check if file not found (errno)
+    free(path);
+    path = NULL;
     if(historyfile)
     {
     	if( received == TRUE )
     	{
-    		fprintf( historyfile, "%s: ", buddyname );
+    		fprintf(historyfile, "%s: ", buddyname);
     	}
     	else
     	{
-    		fprintf( historyfile, "%s: ", get_username() );
+    		fprintf(historyfile, "%s: ", get_username() );
     	}
-        fprintf( historyfile, "%s\n", message );
+        fprintf(historyfile, "%s\n", message);
         fclose(historyfile);	//TODO log an error if there is one
     }
     else
     {
         error("File IO", "Unable to open user's chat history with specified contact");
     }
-    
-    /*switch back to parent directory*/
-    chdir("../");	//TODO change mechanism
 
     return;
 }
 
-extern int init_chatnut_directory(void)
+extern int enter_chatnut_directory(void)
 {
 	errno = 0;
     if( chdir(getenv("HOME")) != 0 )
@@ -293,11 +304,20 @@ extern int init_chatnut_directory(void)
     return 0;
 }
 
+extern void exit_chatnut_directory(void)
+{
+	errno = 0;
+	if(chdir("../") != 0)
+	{
+		error("Quitting", "Unable to switch out of directory .chatnut");
+	}
+}
+
 extern int init_user_directory(void)
 {
 	errno = 0;
     /*directories*/
-    if( mkdir( get_username(), 0755 ) != 0 )
+    if(mkdir(get_username(), 0755) != 0)
     {
         if( errno != EEXIST )
         {
@@ -305,18 +325,22 @@ extern int init_user_directory(void)
             return 1;
         }
     }
-    if( chdir(get_username()) != 0 )
+    errno = 0;
+    char *history = generate_path(get_username(), NULL, "history");
+    if(mkdir(history, 0755) != 0)
     {
-        error("Initialization", "Unable to switch into user's directory");
-        return 1;
-    }
-    if( mkdir( "history", 0755 ) != 0 )
-    {
-        if( errno != EEXIST )
+    	free(history);
+    	history = NULL;
+        if(errno != EEXIST)
         {
             error("Initialization", "Unable to create user's history directory");
             return 1;
         }
+    }
+    else
+    {
+    	free(history);
+    	history = NULL;
     }
     
     return 0;

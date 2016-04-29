@@ -178,8 +178,11 @@ extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treep
 		/*save as buddy's name*/
 		set_buddy(contact_name);
 
-		/*load it's chat history into the message_view*/
-		load_file( "history", contact_name, &history );
+		/*generate path to and load it's chat history into the message_view*/
+		char *path = generate_path(get_username(), "history", contact_name);
+		load_file(path, &history );
+		free(path);
+		path = NULL;
 		show_message_history(history);	//will clear historyview if history is NULL
 		if(history)
 		{

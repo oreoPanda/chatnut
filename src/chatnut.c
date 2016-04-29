@@ -186,20 +186,23 @@ static void evaluate_incoming(const char *data)
 	}
 }
 
-/*alright let's not forget the main function :D*/
+//TODO set_username() should be called once the server accepted the login request
 
+/*alright let's not forget the main function :D*/
 int main( int argc, char *argv[] )
 {
     gtk_init( &argc, &argv );
     logger_init();
     g_timeout_add_seconds( 1, watch_connection, evaluate_incoming );	//TODO might be smart to stop this once connected and reinitiate this by connection breaks
-    if( init_chatnut_directory() != 0 )
+    if(enter_chatnut_directory() != 0 )
     {
         return EXIT_FAILURE;
     }
     create_gui();
     gtk_main();
+
     cleanup_connection_data();
+    exit_chatnut_directory();
     shutdown_logger();
     return EXIT_SUCCESS;
 }
