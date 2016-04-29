@@ -48,20 +48,19 @@ static void create_channel(int fd)
     channel = g_io_channel_unix_new(fd);
     if( !channel )
     {
-    	//TODO use different error mechanism for this
-        fprintf( stderr, "Could not create GIOChannel.\n" );
+    	//TODO ERRNO?
+        error("Connection", "Unable to create GIOChannel");
         return;
     }
     while( (status = g_io_channel_set_encoding( channel, NULL, &error )) == G_IO_STATUS_AGAIN )
     {
-        fprintf( stderr, "Trying again to create GIOChannel.\n" );
+        warn("Connection", "Trying again to set encoding on GIOChannel");
     }
     switch(status)
     {
         case G_IO_STATUS_ERROR:
         {
             //TODO handle this error
-            fprintf( stderr, "Cannot set encoding on GIOChannel.\n" );
             break;
         }
         default:
@@ -71,10 +70,10 @@ static void create_channel(int fd)
     }
     if(error)
     {
-        fprintf( stderr, "%s\n", error->message );
+        error("Connection", error->message);
     }
 
-    printf( "[Connection] Created a GIOChannel\n" );
+    log("Connection", "Created a GIOChannel");
 
     return;
 }
@@ -90,13 +89,13 @@ extern gboolean read_line_from_channel(char **line)
 
 	while( (status = g_io_channel_read_line( channel, line, &length, &line_terminator_pos, &error )) == G_IO_STATUS_AGAIN )
 	{
-		printf("Trying again.\n");
+		warn("Connction", "Trying again to read line from GIOChannel");
 	}
 	switch(status)
 	{
 		case G_IO_STATUS_ERROR:
 		{
-			fprintf( stderr, "Error reading from GIOChannel.\n" );
+			error("Connection", "Unable to read from GIOChannel");
 			break;
 		}
 		case G_IO_STATUS_NORMAL:
@@ -105,20 +104,20 @@ extern gboolean read_line_from_channel(char **line)
 		}
 		case G_IO_STATUS_EOF:
 		{
-			fprintf( stderr, "Reached end of file while reading from GIOChannel.\n" );
+			warn("Connection", "Reached end of file while reading from GIOChannel");
 			return_value = FAILURE;
 			break;
 		}
 		default:
 		{
-			fprintf( stderr, "[Connection] Unknown return value while reading from GIOChannel\n" );
+			warn("Connection", "Unknown return value while reading from GIOChannel");
 			break;
 		}
 	}
 	if(error)
 	{
-		fprintf( stderr, "%s", error->message );
-		error = NULL;
+		error("Connection", error->message);
+		error = NULL;//free()? TODO
 	}
 
 	/*replace line terminator with NULL*/
@@ -178,13 +177,16 @@ extern void write_to_channel( const char *message, const char *username )
 	}
 
 	/*send the completed data*/
-	while( (status = g_io_channel_write_chars( channel, data, length_of_data, &bytes_written, &error )) == G_IO_STATUS_AGAIN );
+	while( (status = g_io_channel_write_chars( channel, data, length_of_data, &bytes_written, &error )) == G_IO_STATUS_AGAIN )
+	{
+		warn("Connection", "Trying again to write to GIOChannel");
+	}
 
 	switch(status)
 	{
 		case G_IO_STATUS_ERROR:
 		{
-			fprintf( stderr, "[Connection error] Unable to write to a GIOChannel.\n" );
+			error("Connection", "Unable to write to GIOChannel");
 			break;
 		}
 		case G_IO_STATUS_NORMAL:
@@ -193,22 +195,22 @@ extern void write_to_channel( const char *message, const char *username )
 		}
 		case G_IO_STATUS_EOF:
 		{
-			fprintf( stderr, "[Connection error] Reached end of file while writing to a GIOChannel.\n" );
+			warn("Connection", "Reached end of file while writing to GIOChannel");
 			break;
 		}
 		default:
 		{
-			fprintf( stderr, "[Connection error] Unknown return value while writing to a GIOChannel\n" );
+			warn("Connection", "Unknown return value while writing to GIOChannel");
 			break;
 		}
 	}
 	if( bytes_written < (gsize)length_of_data )
 	{
-		fprintf( stderr, "[Connection error] Not all bytes were written to GIOChannel\n" );
+		warn("Connection", "Not all bytes were written to GIOChannel");
 	}
 	if(error)
 	{
-		fprintf( stderr, "[--Detail--] %s\n", error->message );
+		error("Connection", error->message);
 		error = NULL;
 	}
 
@@ -219,12 +221,15 @@ extern void write_to_channel( const char *message, const char *username )
 	data = NULL;
 
 	/*flush the channel*/
-	while( (status = g_io_channel_flush( channel, &error )) == G_IO_STATUS_AGAIN );
+	while( (status = g_io_channel_flush( channel, &error )) == G_IO_STATUS_AGAIN )
+	{
+		warn("Connection", "Trying again to flush GIOChannel")
+	}
 	switch(status)
 	{
 		case G_IO_STATUS_ERROR:
 		{
-			fprintf( stderr, "[Connection error] Unable to flush GIOChannel.\n" );
+			error("Connection", "Unable to flush GIOChannel");
 			break;
 		}
 		case G_IO_STATUS_NORMAL:
@@ -233,14 +238,14 @@ extern void write_to_channel( const char *message, const char *username )
 		}
 		default:
 		{
-			fprintf( stderr, "[Connection error] Unknown return value flushing GIOChannel\n" );
+			warn("Connection", "Unknown return value flushing GIOChannel");
 			break;
 		}
 	}
 	if(error)
 	{
-		fprintf( stderr, "[--Detail--] %s\n", error->message );
-		error = NULL;
+		error("Connection", error->message);
+		error = NULL;//TODO free?
 	}
 
 	return;
@@ -252,36 +257,39 @@ static void shutdown_channel(void)
 	gboolean flush = FALSE;
 	GError *error = NULL;
 
-	while( (status = g_io_channel_shutdown( channel, flush, &error )) == G_IO_STATUS_AGAIN );
-	//printf( "channel->ref_count after shutdown = %i\n", channel->ref_count );
+	while( (status = g_io_channel_shutdown( channel, flush, &error )) == G_IO_STATUS_AGAIN )
+	{
+		warn("Connection", "Trying again to shut down GIOChannel");
+	}
+
 	switch(status)
 	{
 		case G_IO_STATUS_NORMAL:
 		{
-			printf( "[Connection] Shutdown of GIOChannel successful.\n" );
+			log("Connection", "Successfully shut down GIOChannel");
 			break;
 		}
 		case G_IO_STATUS_EOF:
 		{
-			print_error("[Connection error] Reached end of file while shutting down the GIOChannel");
+			warn("Connection", "Reached end of file while shutting down GIOChannel");
 			break;
 		}
 		case G_IO_STATUS_ERROR:
 		{
-			print_error("[Connection error] Unable to shut down the GIOChannel");
+			error("Connection", "Unable to shut down GIOChannel");
 			break;
 		}
 		default:
 		{
-			print_error("[Connection error] Unknown status of g_io_channel_shutdown");
+			warn("Connection", "Unknown return value while shutting down GIOChannel");
 			break;
 		}
 	}
 
 	if(error)
 	{
-		print_error(error->message);
-		g_error_free(error);
+		error("Connection", error->message);
+		g_error_free(error);//TODO?
 	}
 
 	return;
@@ -290,27 +298,19 @@ static void shutdown_channel(void)
 //check that this callback isn't rec%nnected indefinitely
 static gboolean channel_in_handle( GIOChannel *source, GIOCondition condition, gpointer eval_func )
 {
+		if(source != channel || condition != G_IO_IN || !eval_func)
+		{
+			warn("Connection", "Unexpected argument while handling incoming data");
+			return G_SOURCE_REMOVE;
+		}
+		
     int read_status = FAILURE;
     char *buffer = NULL;
     void (*evaluate)(const char *) = eval_func;
+    
+    read_status = read_line_from_channel(&buffer);  //returns FAILURE when EOF
 
-    if( source == channel )
-    {
-        switch(condition)
-        {
-            case G_IO_IN:
-            {
-                read_status = read_line_from_channel(&buffer);  //returns FAILURE when EOF
-                break;
-            }
-            default:
-            {
-                printf("Unknown GIOCondition %d.\n", condition);	//TODO use error function
-                break;
-            }
-        }
-
-        if( read_status == SUCCESS )
+        if(read_status == SUCCESS)
         {
             evaluate( (const char *)buffer );
             g_free(buffer);
@@ -322,12 +322,6 @@ static gboolean channel_in_handle( GIOChannel *source, GIOCondition condition, g
             connected = FALSE;
             return G_SOURCE_REMOVE;
         }
-    }
-    else
-    {
-        fprintf( stderr, "[Connection] Warning The passed channel doesn't match the global channel." );
-        return G_SOURCE_REMOVE;
-    }
 }
 
 /*sets the variables address and port*/
