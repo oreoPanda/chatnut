@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include "connection_raw.h"
+#include "logger.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -26,14 +27,19 @@ extern int create_socket(void)
 	socket_t sock;
 	const int y = 1;
 
+	errno = 0;
 	sock = socket( PF_INET, SOCK_STREAM, 0 );
 	if( sock < 0 )		//check if it worked
 	{
-		//TODO use error() from logger.c
-		print_error("Error creating socket");
+		error("Connection Backend", "Unable to create socket");
 	}
 
-	setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, &y, sizeof(int) );//SO_REUSEADDR makes the socket not be unusable for two minutes after server closes
+	//SO_REUSEADDR makes the socket not be unusable for two minutes after server closes
+	if( (setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, &y, sizeof(int) ) ) != 0)
+	{
+		error("Connection Backend", "Unable to set socket reusable");
+		return -1;
+	}
 
 	return sock;
 }
@@ -57,8 +63,9 @@ extern int connect_socket(socket_t *sock, char *server_addr, unsigned short port
 		host_info = gethostbyname( server_addr );
 		if( host_info == NULL )		//if resolving didn't quite work
 		{
-			print_error("Error resolving server address (unknown server)");
-                        return FALSE;
+			errno = 0;	//gethostbyname does not set errno, set to 0 to avoid invalid error message
+			error("Connection Backend", "Error resolving server address (unknown server)");
+			return FALSE;
 		}
 		else
 		{
@@ -71,32 +78,27 @@ extern int connect_socket(socket_t *sock, char *server_addr, unsigned short port
 	server.sin_family = AF_INET;
 	server.sin_port = htons(port);
 
+	errno = 0;
 	/*connect to server and check if connecting worked*/
 	if( connect( *sock, (struct sockaddr*)&server, sizeof(server) ) < 0)
 	{
-		print_error("Error connecting to server");
+		error("Connection Backend", "Unable to connect to server");
 		return FALSE;
 	}
 	else
 	{
 		//say who the client is connected to
-		printf( "[Connection] Connected to server with address %s\n", inet_ntoa(server.sin_addr) );
+		log("Connection Backend", "Connected to server");
 		return TRUE;
 	}
 }
 
 extern void close_socket( socket_t *sock )
 {
-	printf( "[Connection] Closing socket %d\n", *sock );
+	log("Connection Backend", "Closing socket");
+	errno = 0;
 	if( close(*sock) < 0 )
 	{
-		fprintf( stderr, "Error closing socket!: %s\n", strerror(errno) );
+		error("Connection Backend", "Unable to close socket");
 	}
-}
-
-extern void print_error( char *message )
-{
-    fprintf( stderr, "ERROR: %s: %s\n", message, strerror(errno) );
-
-    return;
 }

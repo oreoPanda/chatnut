@@ -20,6 +20,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "connection.h"
 #include "connection_raw.h"
 #include "gui.h"
+#include "logger.h"
 
 GIOChannel *channel = NULL;
 char *address = NULL;

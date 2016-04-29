@@ -21,6 +21,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "connection.h"
 #include "gui.h"
 #include "gui_interaction.h"
+#include "logger.h"
 #include "response_handlers.h"
 #include "file_operations.h"
 #include "user.h"
@@ -87,7 +88,7 @@ static void create_gui(void)
 }
 
 static void evaluate_incoming(const char *data)
-	{
+{
 	commandreply indicator = *data;
 	const char *message = data+1;
 
@@ -95,21 +96,21 @@ static void evaluate_incoming(const char *data)
 	{
 		case CONNECTED:
 		{
-			printf( "[Server reply] Connected\n");
+			log("Server Reply", "Connected");
 
 			popup_login();
 			break;
 		}
 		case LOGIN_FAILURE:
 		{
-			printf( "[Server reply] Login failure\n");
+			log("Server Reply", "Login failure");
 
 			popup_login();
 			break;
 		}
 		case LOGIN_SUCCESS:
 		{
-			printf( "[Server reply] Login success\n");
+			log("Server reply", "Login success");
 
 			/*get buddyname string*/
 			char *buddyname = NULL;
@@ -121,32 +122,32 @@ static void evaluate_incoming(const char *data)
 		}
 		case BUDDY_IS_SET:
 		{
-			printf( "[Server reply] Buddy is now set\n");
+			log("Server Reply", "Buddy is now set");
 			enable_input_view();
 
 			break;
 		}
 		case BUDDY_IS_UNSET:
 		{
-			printf( "[Server reply] Buddy is now unset\n");
+			log("Server Reply", "Buddy is now unset");
 
 			break;
 		}
 		case BUDDY_NOT_EXIST:		//TODO could maybe take out this one
 		{
-			printf( "[Server reply] Buddy does not exist\n");
+			log("Server Reply", "Buddy does not exist");
 
 			break;
 		}
 		case LOOKUP_FAILURE:
 		{
-			printf( "[Server reply] User does not exist\n");
+			log("Server Reply", "User does not exist");
 			break;
 		}
 		/*process of choosing buddy works, code analysis needs to be done TODO*/
 		case LOOKUP_SUCCESS:
 		{
-			printf( "[Server reply] User exists\n");
+			log("Server Reply", "User exists");
 			/*get buddyname string*/
 			char *buddyname = NULL;
 			strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, buddyname should be free()d
@@ -162,7 +163,7 @@ static void evaluate_incoming(const char *data)
 			const char *raw_message = strip_buddyname( message, &buddy_username );//raw_message should not be freed, username should be
 
 			//TODO I got up to here checking the process of an incoming message, continue checking below this line
-			printf("[Message from %s] %s\n", buddy_username, raw_message);
+			log("Message from %s", "%s", buddy_username, raw_message);
 
 			/*append the actual message to history*/
 			append_to_history( raw_message, buddy_username, TRUE );
@@ -181,7 +182,7 @@ static void evaluate_incoming(const char *data)
 		}
 		default:
 		{
-			printf("[Unknown server reply]\n");
+			warn("Server Reply", "Server sent an unknown reply");
 			break;
 		}
 	}

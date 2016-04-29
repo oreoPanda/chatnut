@@ -15,7 +15,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
-//TODO here and in shutdown_logger() check if stderr and stdout can be a FILE*
+//TODO here and in shutdown_logger() check if stderr and stdout can be a FILE
+
+#include "logger.h"
 
 FILE *ef = stderr, *lf = stdout, *wf = stdout;
 
@@ -27,13 +29,13 @@ extern void error(const char *cat, const char *msg)
 
 extern void log(const char *cat, const char *msg)
 {
-	fprintf(lf, "[%s] %s: %s.\n", cat, msg, strerror(errno));
+	fprintf(lf, "[%s] %s.\n", cat, msg);
 	return;
 }
 
 extern void warn(const char *cat, const char *msg)
 {
-	fprintf(wf, "[%s] %s: %s.\n", cat, msg, strerror(errno));
+	fprintf(wf, "[%s] %s.\n", cat, msg);
 	return;
 }
 

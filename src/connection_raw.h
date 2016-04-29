@@ -34,6 +34,5 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 extern int create_socket(void);
 extern int connect_socket( socket_t *sock, char *server_addr, unsigned short port );
 extern void close_socket( socket_t *sock );
-extern void print_error(char *message);
 
 #endif	/* CONNECTION_RAW_H_ */

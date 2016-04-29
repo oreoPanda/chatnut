@@ -15,8 +15,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifdef LOGGER_H_
+#ifndef LOGGER_H_
 #define LOGGER_H_
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 
 extern void error(const char *cat, const char *msg);
 extern void log(const char *cat, const char *msg);
