@@ -21,6 +21,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include <sys/stat.h>	//for mkdir()
 
 #include "file_operations.h"
+#include "logger.h"
 #include "user.h"
 
 static size_t separate_lines( const char *raw, char ***lines );
@@ -138,8 +139,9 @@ extern gboolean add_contact_to_list(const char *contact)
 	/*if contact doesn't exist yet (or if file doesn't exist), open file and write to it*/
 	if( !contact_exists )
 	{
+		errno = 0;
 		FILE *contactfile = NULL;
-		contactfile = fopen( "contactlist", "a" );
+		contactfile = fopen("contactlist", "a");
 		if(contactfile)
 		{
 			fprintf( contactfile, "%s\n", contact );
@@ -148,19 +150,19 @@ extern gboolean add_contact_to_list(const char *contact)
 		}
 		else
 		{
-			fprintf( stderr, "Can't append contact to contactlist in the users .chatnut subdirectory at $HOME/.chatnut/[user]: %s\n", strerror(errno) );
+			error("File IO", "Unable to open contactlist");
 			return FALSE;
 		}
 	}
 	else
 	{
-		fprintf( stderr, "[Contacts] Contact exists!\n" );
+		logg("File IO", "Contact exists");
 		return FALSE;
 	}
 }
 
 /*load a file with name name into *to, dir specifies a directory or NULL*/
-extern gboolean load_file( const char *dir, const char *name, char **to )
+extern gboolean load_file(const char *dir, const char *name, char **to)
 {
 	FILE *file = NULL;
 	int length = 0;
@@ -171,13 +173,13 @@ extern gboolean load_file( const char *dir, const char *name, char **to )
 	{
 		if( chdir(dir) != 0 )
 		{
-			fprintf( stderr, "Unable to switch into user's history directory in $HOME/.chatnut/[user]: %s\n", strerror(errno) );
+			error("File IO", "Unable to switch into user's history directory");
 			return FALSE;
 		}
 	}
 
 	/*open file and read from it*/
-	file = fopen( name, "r" );
+	file = fopen(name, "r");
 	if(!file)
 	{
 		/*no error message since file may just not have been created yet*/
@@ -186,14 +188,14 @@ extern gboolean load_file( const char *dir, const char *name, char **to )
 	}
 	else
 	{
-		fseek( file, 0, SEEK_END );
+		fseek(file, 0, SEEK_END);
 		length = ftell(file);		//number of characters including the terminating '\n' - or 0 when empty
 		rewind(file);
 		if( length > 0 )
 		{
-			if( ( *to = calloc(length, sizeof(char)) ) )	//all characters (including '\n')
+			if( (*to = calloc(length, sizeof(char)) ) )	//all characters (including '\n')
 			{
-				fread( *to, sizeof(char), length, file );
+				fread(*to, sizeof(char), length, file);
 				*( *to+(length-1) ) = '\0';		//substitute a '\0' for the '\n'
 				loaded = TRUE;
 			}
@@ -212,7 +214,12 @@ extern gboolean load_file( const char *dir, const char *name, char **to )
 	/*switch back to parent directory*/
 	if( dir )
 	{
-		chdir("../");
+		errno = 0;
+		if(chdir("../") != 0)
+		{
+			//TODO handle this error or change mechanism: don't even enter the directory but specify it in fopen path
+			error("File IO", "Unable to switch out of user's history directory");
+		}
 	}
 
 	return loaded;
@@ -225,13 +232,15 @@ extern void append_to_history( const char *message, const char *buddyname, gbool
     const char *filename = buddyname;
     const char *path = "history";
     
+    errno = 0;
     /*switch to directory*/
     if( chdir(path) != 0 )
     {
-        fprintf( stderr, "Unable to switch into user's history directory in $HOME/.chatnut/[user]: %s\n", strerror(errno) );
+        error("File IO", "Unable to switch into user's history directory");
         return;
     }
 
+    errno = 0;
     /*open file and write to it*/
     historyfile = fopen( filename, "a" );		//NULL check if file not found (errno)
     if(historyfile)
@@ -249,59 +258,63 @@ extern void append_to_history( const char *message, const char *buddyname, gbool
     }
     else
     {
-        fprintf( stderr, "Unable to open user's chat history for contact in $HOME/.chatnut/[user]/history: %s\n", strerror(errno) );
+        error("File IO", "Unable to open user's chat history with specified contact");
     }
     
     /*switch back to parent directory*/
-    chdir("../");
+    chdir("../");	//TODO change mechanism
 
     return;
 }
 
 extern int init_chatnut_directory(void)
 {
+	errno = 0;
     if( chdir(getenv("HOME")) != 0 )
     {
-        fprintf( stderr, "Error switching into your home directory: %s\n", strerror(errno) );
+        error("Initialization", "Unable to switch into your home directory");
         return 1;
     }
     if( mkdir( ".chatnut", 0755 ) != 0 )
     {
         if( errno != EEXIST )
         {
-            fprintf( stderr, "Error creating directory .chatnut in your home directory: %s\n", strerror(errno) );
+        	error("Initialization", "Unable to create directory .chatnut in your home directory");
             return 1;
         }
     }
+    errno = 0;
     if( chdir(".chatnut") != 0 )
     {
-        fprintf( stderr, "Error switching to .chatnut in your home directory: %s\n", strerror(errno) );
+        error("Initialization", "Unable to switch to .chatnut in your home directory");
         return 1;
     }
+    
     return 0;
 }
 
 extern int init_user_directory(void)
 {
+	errno = 0;
     /*directories*/
     if( mkdir( get_username(), 0755 ) != 0 )
     {
         if( errno != EEXIST )
         {
-            fprintf( stderr, "Error creating users directory in $HOME/.chatnut: %s\n", strerror(errno) );
+            error("Initialization", "Unable to create user´s directory");
             return 1;
         }
     }
     if( chdir(get_username()) != 0 )
     {
-        fprintf( stderr, "Error switching into user's directory in $HOME/.chatnut: %s\n", strerror(errno) );
+        error("Initialization", "Unable to switch into user's directory");
         return 1;
     }
     if( mkdir( "history", 0755 ) != 0 )
     {
         if( errno != EEXIST )
         {
-            fprintf( stderr, "Error creating history directory for user in $HOME/.chatnut/[user]: %s\n", strerror(errno) );
+            error("Initialization", "Unable to create user's history directory");
             return 1;
         }
     }

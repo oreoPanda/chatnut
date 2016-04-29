@@ -1,4 +1,4 @@
-/*connection_raw.h*/
+/*logger.h*/
 
 /*Copyright (C) 2016 Jonas Fuglsang-Petersen*/
 
@@ -15,24 +15,23 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef CONNECTION_RAW_H_
-#define	CONNECTION_RAW_H_
+#ifndef LOGGER_H_
+#define LOGGER_H_
 
 #include <errno.h>
-#include <fcntl.h>
-#include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 
-#define socket_t int
+extern void error(const char *cat, const char *msg);
+extern void logg(const char *cat, const char *msg);
+extern void warn(const char *cat, const char *msg);
 
-extern int create_socket(void);
-extern int connect_socket( socket_t *sock, char *server_addr, unsigned short port );
-extern void close_socket( socket_t *sock );
+extern void logger_init(void);
 
-#endif	/* CONNECTION_RAW_H_ */
+extern void set_error(const char *filename);
+extern void set_log(const char *filename);
+extern void set_warn(const char *filename);
+
+extern void shutdown_logger(void);
+
+#endif			//LOGGER_H_

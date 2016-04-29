@@ -21,6 +21,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 #include "connection.h"
 #include "gui.h"
 #include "gui_interaction.h"
+#include "logger.h"
 #include "response_handlers.h"
 #include "file_operations.h"
 #include "user.h"
@@ -46,10 +47,8 @@ enum reply
     ERROR
 };
 
-//TODO check if strncpy and strncat return values matter for moved strings
-
 /*returns a pointer to the part of message where the actual message begins, this pointer should not be freed separately from message*/
-const char *strip_buddyname( const char *message, char **buddyname )
+const char *strip_buddyname(const char *message, char **buddyname)
 {
     int namelength = -1;
 
@@ -87,7 +86,7 @@ static void create_gui(void)
 }
 
 static void evaluate_incoming(const char *data)
-	{
+{
 	commandreply indicator = *data;
 	const char *message = data+1;
 
@@ -95,21 +94,21 @@ static void evaluate_incoming(const char *data)
 	{
 		case CONNECTED:
 		{
-			printf( "[Server reply] Connected\n");
+			logg("Server Reply", "Connected");
 
-			g_idle_add( popup_login, NULL );
+			popup_login();
 			break;
 		}
 		case LOGIN_FAILURE:
 		{
-			printf( "[Server reply] Login failure\n");
+			logg("Server Reply", "Login failure");
 
-			g_idle_add( popup_login, NULL );
+			popup_login();
 			break;
 		}
 		case LOGIN_SUCCESS:
 		{
-			printf( "[Server reply] Login success\n");
+			logg("Server reply", "Login success");
 
 			/*get buddyname string*/
 			char *buddyname = NULL;
@@ -121,32 +120,32 @@ static void evaluate_incoming(const char *data)
 		}
 		case BUDDY_IS_SET:
 		{
-			printf( "[Server reply] Buddy is now set\n");
+			logg("Server Reply", "Buddy is now set");
 			enable_input_view();
 
 			break;
 		}
 		case BUDDY_IS_UNSET:
 		{
-			printf( "[Server reply] Buddy is now unset\n");
+			logg("Server Reply", "Buddy is now unset");
 
 			break;
 		}
 		case BUDDY_NOT_EXIST:		//TODO could maybe take out this one
 		{
-			printf( "[Server reply] Buddy does not exist\n");
+			logg("Server Reply", "Buddy does not exist");
 
 			break;
 		}
 		case LOOKUP_FAILURE:
 		{
-			printf( "[Server reply] User does not exist\n");
+			logg("Server Reply", "User does not exist");
 			break;
 		}
 		/*process of choosing buddy works, code analysis needs to be done TODO*/
 		case LOOKUP_SUCCESS:
 		{
-			printf( "[Server reply] User exists\n");
+			logg("Server Reply", "User exists");
 			/*get buddyname string*/
 			char *buddyname = NULL;
 			strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, buddyname should be free()d
@@ -162,11 +161,11 @@ static void evaluate_incoming(const char *data)
 			const char *raw_message = strip_buddyname( message, &buddy_username );//raw_message should not be freed, username should be
 
 			//TODO I got up to here checking the process of an incoming message, continue checking below this line
-			printf("[Message from %s] %s\n", buddy_username, raw_message);
+			logg("Server Reply", "New message");
 
 			/*append the actual message to history*/
 			append_to_history( raw_message, buddy_username, TRUE );
-			if( get_buddy() )//TODO make sure get_buddy is ALWAYS (no matter whether or not buddy is online) the currently selected one
+			if( get_buddy() )
 			{
 				if( strcmp( get_buddy(), buddy_username ) == 0 )
 				{
@@ -181,7 +180,7 @@ static void evaluate_incoming(const char *data)
 		}
 		default:
 		{
-			printf("[Unknown server reply]\n");
+			warn("Server Reply", "Server sent an unknown reply");
 			break;
 		}
 	}
@@ -192,13 +191,15 @@ static void evaluate_incoming(const char *data)
 int main( int argc, char *argv[] )
 {
     gtk_init( &argc, &argv );
-    g_idle_add( watch_connection, evaluate_incoming );
+    logger_init();
+    g_timeout_add_seconds( 1, watch_connection, evaluate_incoming );	//TODO might be smart to stop this once connected and reinitiate this by connection breaks
     if( init_chatnut_directory() != 0 )
     {
-        fprintf( stderr, "Error initializing directory .chatnut in $HOME. Make sure this process is allowed to create directories in $HOME.\n" );
         return EXIT_FAILURE;
     }
     create_gui();
     gtk_main();
+    cleanup_connection_data();
+    shutdown_logger();
     return EXIT_SUCCESS;
 }
