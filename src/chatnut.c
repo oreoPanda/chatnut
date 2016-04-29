@@ -47,8 +47,6 @@ enum reply
     ERROR
 };
 
-//TODO check if strncpy and strncat return values matter for moved strings
-
 /*returns a pointer to the part of message where the actual message begins, this pointer should not be freed separately from message*/
 const char *strip_buddyname( const char *message, char **buddyname )
 {
