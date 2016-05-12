@@ -48,12 +48,12 @@ gboolean togglestatus = FALSE;
 gboolean list_was_visible = FALSE;
 gboolean label_was_visible = FALSE;
 
-//TODO the destroy signal needs to call a quit function, the quit function needs to shutdown the GIOChannel and call gtk_main_quit
+//TODO the destroy signal needs to call a quit function, the quit function needs to shutdown the GIOChannel and call gtk_main_quit and se comment in create_window
 extern void create_window(void)
 {
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
-    //signals associated with the main window
+    //signals associated with the main window TODO Erite a callback and call destroy_list_or_label
     g_signal_connect( window, "destroy", G_CALLBACK(gtk_main_quit), NULL );
 
     //graphical window properties
