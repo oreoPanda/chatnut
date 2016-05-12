@@ -466,11 +466,6 @@ extern void enable_add_contact_button(void)
     return;
 }
 
-extern gboolean window_contains_label(void)
-{
-	return contains_label;
-}
-
 //login popup, no cancel button
 extern void popup_login()
 {

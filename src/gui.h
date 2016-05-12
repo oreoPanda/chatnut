@@ -48,9 +48,6 @@ extern void populate_window_with_list(void);
 extern void populate_window_with_label(void);
 extern void enable_add_contact_button(void);
 
-extern gboolean window_contains_label(void);
-extern gboolean window_contains_list(void);
-
 extern void popup_connect(void);
 extern void popup_login(void);
 extern void popup_add_contact(void);
