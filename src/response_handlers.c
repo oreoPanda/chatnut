@@ -69,26 +69,15 @@ extern void handle_login_success(const char *username)
     /*update window title*/
     update_window_title();
 
-    /*load and show contacts*/
-    if(window_contains_label() )
-    {
-    	destroy_label();
-    }
-    else
-    {
-    	destroy_list();
-    }
-
+	/*load and show contacts TODO free model? or unref it?*/
 	GtkListStore *model = create_contact_list_model();
 	if(model)
 	{
-		show_list_view(model);
-		populate_window_with_list();
+		toggle_list_view(model);
 	}
 	else
 	{
-		create_label("You don't have any contacts yet.");
-		populate_window_with_label();
+		edit_label("You don't have any contacts yet.");
 	}
 
     return;
