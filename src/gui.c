@@ -42,7 +42,11 @@ GtkWidget *dialog_add_contact = NULL,
 
 gboolean input_view_enabled = FALSE;
 gulong input_view_key_press_handler_id = 0;
-gboolean contains_label = FALSE;
+
+//variables for toggling between label and list
+gboolean togglestatus = FALSE;
+gboolean list_was_visible = FALSE;
+gboolean label_was_visible = FALSE;
 
 //TODO the destroy signal needs to call a quit function, the quit function needs to shutdown the GIOChannel and call gtk_main_quit
 extern void create_window(void)
@@ -294,7 +298,7 @@ extern void create_right_grid(void)
 }
 
 /*create a GtkTreeView with one column that has a GtkCellRendererText*/
-extern void init_list_view(void)
+extern void create_list_view(void)
 {
 	GtkTreeViewColumn *column = NULL;
 	GtkCellRenderer *renderer = NULL;
@@ -316,13 +320,71 @@ extern void init_list_view(void)
 	return;
 }
 
-extern void show_list_view(GtkListStore *store)
+extern void create_label(const gchar *message)
 {
-	/*add the model to the treeview*/
+        label = gtk_label_new(message);
+        gtk_widget_set_hexpand( label, TRUE );
+        gtk_widget_set_vexpand( label, TRUE );
+
+   return;
+}
+
+extern void toggle_list_view(gboolean toggleon, GtkTreeModel *store)
+{
+	if(toggleon)
+	{
+		if(togglestatus == FALSE)
+		{
+		/*hide label*/
+		gtk_widget_hide(label);
+		g_object_ref(label);
+		gtk_grid_detach();
+		
+		/*show list*/
+		//add the model to the treeview
 	gtk_tree_view_set_model( GTK_TREE_VIEW(list), GTK_TREE_MODEL(store) );
 
-	gtk_widget_show(list);
-
+			gtk_grid_attach( GTK_GRID(rgrid), list, 0, 1, 3, 1 );
+			gtk_widget_show(list);
+			if(list_was_visible)
+			{
+				g_object_unref(list);
+			}
+			togglestatus = TRUE;
+			list_was_visible = TRUE;
+			}
+		}
+		else
+		{
+			warn("already toggled on")
+		}
+	}
+	//toggle off and show label
+	else
+	{
+		if(togglestatus == TRUE)
+		{
+			/*hide list*/
+			gtk_widget_hide(list);
+			g_object_ref(list);
+			gtk_grid_detach();
+			
+			/*show label*/
+			gtk_grid_attach( GTK_GRID(rgrid), label, 0, 1, 3, 1 );
+			gtk_widget_show(label);
+			if(reshow)
+			{
+				g_object_unref();
+			}
+			togglestatus = FALSE;
+			label_was_visible = TRUE;
+		}
+		else
+		{
+			warn("already togled off")
+		}
+	}
+	
 	return;
 }
 
@@ -338,29 +400,21 @@ extern void add_contact_to_list_view(const char *contact)
     return;
 }
 
-extern void create_label(const gchar *message)
+extern void edit_label(const gchar *text)
 {
-        label = gtk_label_new(message);
-        gtk_widget_set_hexpand( label, TRUE );
-        gtk_widget_set_vexpand( label, TRUE );
-
-        gtk_widget_show(label);
-
-        return;
+	gtk_label_set_text(GTK_LABEL(label), text)
 }
 
-extern void destroy_label(void)
+extern void destroy_list_or_label(void)
 {
-	gtk_widget_destroy(label);
-
-	return;
-}
-
-extern void destroy_list(void)
-{
-	gtk_widget_destroy(list);	//TODO check
-
-	return;
+	if(togglestatus == TRUE)
+	{
+		g_object_unref(label)
+	}
+	else
+	{
+		g_object_unref(list);
+	}
 }
 
 extern void create_buttons(void)
@@ -396,23 +450,11 @@ extern void populate_window(void)
 	gtk_grid_attach( GTK_GRID(rgrid), button_settings, 2, 0, 1, 1 );
 
 	gtk_grid_attach( GTK_GRID(rgrid), label, 0, 1, 3, 1 );
-	contains_label = TRUE;
+	gtk_widget_show(label);
+	togglestatus = TRUE;
+	label_was_visible = TRUE;
 	gtk_grid_attach( GTK_GRID(rgrid), button_add_contact, 0, 2, 3, 1 );
 
-	return;
-}
-
-extern void populate_window_with_list(void)
-{
-	gtk_grid_attach( GTK_GRID(rgrid), list, 0, 1, 3, 1 );
-	contains_label = FALSE;
-    return;
-}
-
-extern void populate_window_with_label(void)
-{
-	gtk_grid_attach( GTK_GRID(rgrid), label, 0, 1, 3, 1 );
-	contains_label = TRUE;
 	return;
 }
 

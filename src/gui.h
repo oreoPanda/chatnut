@@ -35,12 +35,12 @@ extern void clear_input_view(void);
 extern void show_message_history( const char *history );
 extern void append_to_history_view( const char *buffer, const char *sender );
 extern void create_right_grid(void);
-extern void init_list_view(void);
-extern void show_list_view(GtkListStore *model);
-extern void add_contact_to_list_view(const char *contact);
+extern void create_list_view(void);
 extern void create_label(const gchar *message);
-extern void destroy_label(void);
-extern void destroy_list(void);
+extern void toggle_list_view(GtkListStore *model, gboolean reshow);
+extern void add_contact_to_list_view(const char *contact);
+extern void edit_label(const gchar *text);
+extern void destroy_list_or_label(void);
 extern void create_buttons(void);
 
 extern void populate_window(void);
