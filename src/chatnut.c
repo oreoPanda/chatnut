@@ -68,21 +68,21 @@ const char *strip_buddyname(const char *message, char **buddyname)
 
 static void create_gui(void)
 {
-    create_window();
-    create_main_pane();
-    create_left_pane();
-    create_history_scrollbox();
-    create_history_view();
-    create_input_scrollbox();
-    create_input_view();
-    create_right_grid();
-    init_list_view();
-    create_label("You are not logged in yet.");
-    create_buttons();
+	create_window();
+	create_main_pane();
+	create_left_pane();
+	create_history_scrollbox();
+	create_history_view();
+	create_input_scrollbox();
+	create_input_view();
+	create_right_grid();
+	create_list_view();
+	create_label("You are not logged in yet.");
+	create_buttons();
 
-    populate_window();
+	populate_window();
 
-    return;
+	return;
 }
 
 static void evaluate_incoming(const char *data)

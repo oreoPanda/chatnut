@@ -34,20 +34,10 @@ extern void handle_buddy_is_set(void)
 
 extern void handle_lookup_success(const char *contact)
 {
-    if( add_contact_to_list(contact) )
-    {
-    	if( window_contains_label() )
-    	{
-    		destroy_label();
-    		GtkListStore *model = create_contact_list_model();
-    		show_list_view(model);
-    		populate_window_with_list();
-    	}
-    	else
-    	{
-    		add_contact_to_list_view(contact);
-    	}
-    }
+	if( add_contact_to_list(contact) )
+	{
+		add_contact_to_list_view(contact);
+	}
 
     return;
 }
@@ -73,11 +63,12 @@ extern void handle_login_success(const char *username)
 	GtkListStore *model = create_contact_list_model();
 	if(model)
 	{
-		toggle_list_view(model);
+		toggle_list_view(TRUE, model);
 	}
 	else
 	{
 		edit_label("You don't have any contacts yet.");
+		toggle_list_view(FALSE, NULL);
 	}
 
     return;

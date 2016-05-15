@@ -51,7 +51,6 @@ extern char *generate_path(const char *userdir, const char *subdir, const char *
 		strncat(path, "/", 1);
 	}
 	strncat(path, filename, strlen(filename) );
-	strncat(path, "/", 1);
 
 	return path;
 }
