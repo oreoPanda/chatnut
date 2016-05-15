@@ -495,6 +495,7 @@ extern void popup_login()
 
 	/*password entry*/
 	password_entry_field = gtk_entry_new();
+	gtk_entry_set_visibility(GTK_ENTRY(password_entry_field), FALSE);
 
 	/*pack*/
 	gtk_grid_attach(GTK_GRID(username_grid), username_label, 0, 0, 1, 1);
