@@ -320,6 +320,7 @@ static gboolean channel_in_handle( GIOChannel *source, GIOCondition condition, g
         {
             g_free(buffer);
             connected = FALSE;
+            disable_add_contact_button();
             return G_SOURCE_REMOVE;
         }
 }

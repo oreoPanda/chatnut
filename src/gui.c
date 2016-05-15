@@ -49,6 +49,8 @@ gboolean togglestatus = FALSE;
 gboolean list_was_visible = FALSE;
 gboolean label_was_visible = FALSE;
 
+unsigned long addcontactbuttonid;
+
 //TODO the destroy signal needs to call a quit function, the quit function needs to shutdown the GIOChannel and call gtk_main_quit
 extern void create_window(void)
 {
@@ -408,6 +410,8 @@ extern void create_buttons(void)
 	gtk_widget_show(button_settings);
 
 	button_add_contact = gtk_button_new_with_label("Add Contact");
+	addcontactbuttonid = g_signal_connect( button_add_contact, "clicked", G_CALLBACK(popup_add_contact), NULL );
+	disable_add_contact_button();
 	gtk_widget_show(button_add_contact);
 
 	return;
@@ -438,12 +442,16 @@ extern void populate_window(void)
 	return;
 }
 
-/*TODO this call can be put into the function for the button...  ...no?, enabled after login!*/
+extern void disable_add_contact_button(void)
+{
+	g_signal_handler_block(button_add_contact, addcontactbuttonid);
+	return;
+}
+
 extern void enable_add_contact_button(void)
 {
-    g_signal_connect( button_add_contact, "clicked", G_CALLBACK(popup_add_contact), NULL );
-
-    return;
+	g_signal_handler_unblock(button_add_contact, addcontactbuttonid);
+	return;
 }
 
 //login popup, no cancel button
