@@ -36,12 +36,16 @@ extern gboolean connect_callback(GtkDialog *dialog, gint response_id, gpointer d
 		warn("GUI Callback", "Unexpected argument while processing server data");
 	}
 
-	//get entries from dialog
+	/*get entries from dialog*/
 	GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
 	GList *elements = gtk_container_get_children(GTK_CONTAINER(content_area));
-	GtkEntry *address_entry = elements->data;
+
+	GtkGrid *address_grid = elements->data;
 	elements = elements->next;
-	GtkEntry *port_entry = elements->data;
+	GtkGrid *port_grid = elements->data;
+
+	GtkEntry *address_entry = GTK_ENTRY( gtk_grid_get_child_at(address_grid, 1, 0) );
+	GtkEntry *port_entry = GTK_ENTRY( gtk_grid_get_child_at(port_grid, 1, 0) );
 
 	//get text from entries
 	const char *buf = gtk_entry_get_text(port_entry);
@@ -120,9 +124,12 @@ extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
 	GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
 	GList *elements = gtk_container_get_children(GTK_CONTAINER(content_area));
 
-	GtkEntry *username_entry = elements->data;
+	GtkGrid *username_grid = elements->data;
 	elements = elements->next;
-	GtkEntry *password_entry = elements->data;
+	GtkGrid *password_grid = elements->data;
+
+	GtkEntry *username_entry = GTK_ENTRY( gtk_grid_get_child_at(username_grid, 1, 0) );
+	GtkEntry *password_entry = GTK_ENTRY( gtk_grid_get_child_at(password_grid, 1, 0) );
 
 	//get text from entries
 	const char *username = gtk_entry_get_text(username_entry);
