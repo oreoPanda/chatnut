@@ -503,7 +503,7 @@ extern void popup_login()
 	gtk_grid_attach(GTK_GRID(password_grid), password_label, 0, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(password_grid), password_entry_field, 1, 0, 1, 1);
 	gtk_box_pack_start( GTK_BOX(dialog_content_area), password_grid, FALSE, FALSE, 0 );
-	gtk_dialog_add_button( GTK_DIALOG(dialog_login),  "OK/Login", GTK_RESPONSE_OK );
+	gtk_dialog_add_button( GTK_DIALOG(dialog_login),  "Login", GTK_RESPONSE_OK );
 
 	/*connect the "response" signal*/
 	g_signal_connect( GTK_DIALOG(dialog_login), "response", G_CALLBACK(login), NULL );
@@ -573,7 +573,7 @@ extern void popup_connect()
 	gtk_grid_attach(GTK_GRID(port_grid), port_label, 0, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(port_grid), port_entry_field, 1, 0, 1, 1);
 	gtk_box_pack_start( GTK_BOX(dialog_content_area), port_grid, FALSE, FALSE, 0 );
-	gtk_dialog_add_button( GTK_DIALOG(dialog_connect),  "OK/Login", GTK_RESPONSE_OK );
+	gtk_dialog_add_button( GTK_DIALOG(dialog_connect),  "Connect", GTK_RESPONSE_OK );
 
 	/*connect the "response" signal*/
 	g_signal_connect( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(connect_callback), NULL);
