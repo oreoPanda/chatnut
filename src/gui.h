@@ -44,8 +44,6 @@ extern void destroy_list_or_label(void);
 extern void create_buttons(void);
 
 extern void populate_window(void);
-extern void populate_window_with_list(void);
-extern void populate_window_with_label(void);
 extern void disable_add_contact_button(void);
 extern void enable_add_contact_button(void);
 

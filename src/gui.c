@@ -457,78 +457,141 @@ extern void enable_add_contact_button(void)
 //login popup, no cancel button
 extern void popup_login()
 {
-    GtkWidget *dialog_content_area = NULL,
-                *username_entry_field = NULL,
-                *password_entry_field = NULL;
-    
-    /*dialog*/
-    dialog_login = gtk_dialog_new();
+	GtkWidget *dialog_content_area = NULL,
+			*username_grid = NULL,
+			*username_label = NULL,
+			*username_entry_field = NULL,
+			*password_grid = NULL,
+			*password_label = NULL,
+			*password_entry_field = NULL;
 
+	/*dialog*/
+	dialog_login = gtk_dialog_new();
+	gtk_window_set_title(GTK_WINDOW(dialog_login), "Login");
 
-    gtk_window_set_transient_for(GTK_WINDOW(dialog_login), GTK_WINDOW(window) );
-    dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_login));
+	gtk_window_set_transient_for(GTK_WINDOW(dialog_login), GTK_WINDOW(window) );
+	dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_login));
 
-    /*username entry*/
-    username_entry_field = gtk_entry_new();
+	/*username grid*/
+	username_grid = gtk_grid_new();
+	gtk_grid_set_column_spacing(GTK_GRID(username_grid), 10);
 
-    /*password entry*/
-    password_entry_field = gtk_entry_new();
+	/*username label*/
+	username_label = gtk_label_new("Username:");
+	gtk_widget_set_hexpand(username_label, TRUE);
+	gtk_widget_set_halign(username_label, GTK_ALIGN_START);
 
-    /*pack*/
-    gtk_box_pack_start( GTK_BOX(dialog_content_area), username_entry_field, FALSE, FALSE, 0 );
-    gtk_box_pack_start( GTK_BOX(dialog_content_area), password_entry_field, FALSE, FALSE, 0 );
-    gtk_dialog_add_button( GTK_DIALOG(dialog_login),  "OK/Login", GTK_RESPONSE_OK );
+	/*username entry*/
+	username_entry_field = gtk_entry_new();
 
-    /*connect the "response" signal*/
-    g_signal_connect( GTK_DIALOG(dialog_login), "response", G_CALLBACK(login), NULL );
-    g_signal_connect_swapped( GTK_DIALOG(dialog_login), "response", G_CALLBACK(gtk_widget_destroy), dialog_login);
+	/*password grid*/
+	password_grid = gtk_grid_new();
+	gtk_grid_set_column_spacing(GTK_GRID(password_grid), 10);
 
-    gtk_widget_show(username_entry_field);
-    gtk_widget_show(password_entry_field);
-    gtk_widget_show(dialog_login);
+	/*password label*/
+	password_label = gtk_label_new("Password:");
+	gtk_widget_set_hexpand(password_label, TRUE);
+	gtk_widget_set_halign(password_label, GTK_ALIGN_START);
 
-    return;
+	/*password entry*/
+	password_entry_field = gtk_entry_new();
+
+	/*pack*/
+	gtk_grid_attach(GTK_GRID(username_grid), username_label, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(username_grid), username_entry_field, 1, 0, 1, 1);
+	gtk_box_pack_start( GTK_BOX(dialog_content_area), username_grid, FALSE, FALSE, 0 );
+	gtk_grid_attach(GTK_GRID(username_grid), password_label, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(username_grid), password_entry_field, 1, 0, 1, 1);
+	gtk_box_pack_start( GTK_BOX(dialog_content_area), password_grid, FALSE, FALSE, 0 );
+	gtk_dialog_add_button( GTK_DIALOG(dialog_login),  "OK/Login", GTK_RESPONSE_OK );
+
+	/*connect the "response" signal*/
+	g_signal_connect( GTK_DIALOG(dialog_login), "response", G_CALLBACK(login), NULL );
+	g_signal_connect_swapped( GTK_DIALOG(dialog_login), "response", G_CALLBACK(gtk_widget_destroy), dialog_login);
+
+	gtk_widget_show(username_grid);
+	gtk_widget_show(username_label);
+	gtk_widget_show(username_entry_field);
+	gtk_widget_show(password_grid);
+	gtk_widget_show(password_label);
+	gtk_widget_show(password_entry_field);
+	gtk_widget_show(dialog_login);
+
+	return;
 }
 
 //Connect popup, no cancel button and not always in front
 extern void popup_connect()
 {
-    GtkWidget *dialog_content_area = NULL,
-                *address_entry_field = NULL,
-                *port_entry_field = NULL;
-    
-    /*dialog*/
-    dialog_connect = gtk_dialog_new();
+	GtkWidget *dialog_content_area = NULL,
+			*addr_grid = NULL,
+			*addr_label = NULL,
+			*address_entry_field = NULL,
+			*port_grid = NULL,
+			*port_label = NULL,
+			*port_entry_field = NULL;
 
-    //set it to transient (belongs to window below, may not outlast it and is always on top)
-    gtk_window_set_transient_for(GTK_WINDOW(dialog_connect), GTK_WINDOW(window) );
-    dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_connect));
+	int labelw;
 
-    /*address entry*/
-    address_entry_field = gtk_entry_new();
+	/*dialog*/
+	dialog_connect = gtk_dialog_new();
+	gtk_window_set_title(GTK_WINDOW(dialog_connect), "Connect to server");
 
-    /*port entry*/
-    port_entry_field = gtk_entry_new();
-    gtk_entry_set_input_purpose(GTK_ENTRY(port_entry_field), GTK_INPUT_PURPOSE_DIGITS);	//help the onscreen keyboards
+	//set it to transient (belongs to window below, may not outlast it and is always on top)
+	gtk_window_set_transient_for(GTK_WINDOW(dialog_connect), GTK_WINDOW(window) );
+	dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_connect));
 
-    /*pack*/
-    gtk_box_pack_start( GTK_BOX(dialog_content_area), address_entry_field, FALSE, FALSE, 0 );
-    gtk_box_pack_start( GTK_BOX(dialog_content_area), port_entry_field, FALSE, FALSE, 0 );
-    gtk_dialog_add_button( GTK_DIALOG(dialog_connect),  "OK/Login", GTK_RESPONSE_OK );
+	/*address grid*/
+	addr_grid = gtk_grid_new();
+	gtk_grid_set_column_spacing(GTK_GRID(addr_grid), 10);
 
-    /*connect the "response" signal*/
-    g_signal_connect( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(connect_callback), NULL);
-    g_signal_connect_swapped( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(gtk_widget_destroy), dialog_connect);
-    
-    //show
-    gtk_widget_show(address_entry_field);
-    gtk_widget_show(port_entry_field);
-    gtk_widget_show(dialog_connect);
+	/*address label*/
+	addr_label = gtk_label_new("Address:");
+	gtk_widget_set_hexpand(addr_label, TRUE);
+	gtk_widget_set_halign(addr_label, GTK_ALIGN_START);
 
-    //we no longer need the pointer to the dialog, the callbacks have it if they need it
-    dialog_connect = NULL;
+	/*address entry*/
+	address_entry_field = gtk_entry_new();
 
-    return;
+	/*port grid*/
+	port_grid = gtk_grid_new();
+	gtk_grid_set_column_spacing(GTK_GRID(port_grid), 10);
+
+	/*port label*/
+	port_label = gtk_label_new("Port:");
+	gtk_widget_set_hexpand(port_label, TRUE);
+	gtk_widget_set_halign(port_label, GTK_ALIGN_START);
+
+	/*port entry*/
+	port_entry_field = gtk_entry_new();
+	gtk_entry_set_input_purpose(GTK_ENTRY(port_entry_field), GTK_INPUT_PURPOSE_DIGITS);	//help the onscreen keyboards
+
+	/*pack address and port inputs*/
+	gtk_grid_attach(GTK_GRID(addr_grid), addr_label, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(addr_grid), address_entry_field, 1, 0, 1, 1);
+	gtk_box_pack_start( GTK_BOX(dialog_content_area), addr_grid, FALSE, FALSE, 0 );
+	gtk_grid_attach(GTK_GRID(port_grid), port_label, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(port_grid), port_entry_field, 1, 0, 1, 1);
+	gtk_box_pack_start( GTK_BOX(dialog_content_area), port_grid, FALSE, FALSE, 0 );
+	gtk_dialog_add_button( GTK_DIALOG(dialog_connect),  "OK/Login", GTK_RESPONSE_OK );
+
+	/*connect the "response" signal*/
+	g_signal_connect( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(connect_callback), NULL);
+	g_signal_connect_swapped( GTK_DIALOG(dialog_connect), "response", G_CALLBACK(gtk_widget_destroy), dialog_connect);
+
+	//show
+	gtk_widget_show(addr_grid);
+	gtk_widget_show(addr_label);
+	gtk_widget_show(address_entry_field);
+	gtk_widget_show(port_grid);
+	gtk_widget_show(port_label);
+	gtk_widget_show(port_entry_field);
+	gtk_widget_show(dialog_connect);
+
+	//we no longer need the pointer to the dialog, the callbacks have it if they need it
+	dialog_connect = NULL;
+
+	return;
 }
 
 /*open up a dialog for adding a contact. TODO check argu ents of callback*/
