@@ -359,7 +359,7 @@ extern gboolean watch_connection(gpointer eval_func)
 				g_io_channel_unref(channel);
 				channel = NULL;
 			}
-
+                        //FIXME sometimes int is used, sometimes socket_t
 			/*this will only be done if connection is lost and channel is NULL*/
 			int sock = create_socket();
 			if( sock > 0 )
