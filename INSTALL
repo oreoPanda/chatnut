@@ -1,6 +1,7 @@
 Installation Instructions for Windows
 
-chatnut does not require any installation. Simply run the file chatnut.exe.
+chatnut does not require any installation. Simply double-click on chatnut.exe, 
+which is a shortcut to chatnut.exe in the bin folder, to run chatnut.
 If you wish, you can create a shortcut on your desktop referring to chatnut.exe.
 
 In case you want to compile chatnut on your machine, you can use the Makefile
