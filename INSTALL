@@ -1,34 +1,24 @@
-Installation Instructions
+Installation Instructions for Windows
 
-Copyright (C) 2016 Jonas Fuglsang-Petersen
+chatnut does not require any installation. Simply run the file chatnut.exe.
+If you wish, you can create a shortcut on your desktop referring to chatnut.exe.
 
-chatnut is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+In case you want to compile chatnut on your machine, you can use the Makefile
+in this directory. It assumes that you're using gcc as compiler, if you're not, 
+change the Makefile accordingly.
 
-chatnut is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with chatnut.  If not, see <http://www.gnu.org/licenses/>.
-
-In this directory, execute the command
+If your make program is called make, you can run the command
 
 'make'
 
-to build chatnut.
+in this directory to build chatnut. If your make program has a different
+name, use that name.
 
-The command
-
-'make install'
-
-will install chatnut.
-
-After installation, you can optionally execute the command
+After building, you can optionally run the command
 
 'make clean'
 
-to remove the chatnut executable and all object files in ./src
+to remove all object files in ./src.
+
+Feel free to contact the developer with any questions about installation
+or compiling.

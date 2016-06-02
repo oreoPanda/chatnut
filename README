@@ -1,4 +1,16 @@
-This README currently contains no instructions on how to use chatnut.
+README first
+
+Description
+chatnut is a messaging program which allows you to connect and log in
+to a chatnut server and chat with your buddies.
+
+Licensing information
+chatnut is licensed under version 3 of the GNU General Public License.
+The file COPYING contains a copy of the License.
+
+Libraries that chatnut uses with licensing information
+chatnut uses GTK+ which is licensed under the GNU Lesser General Public
+License. The file COPYING.LESSER contains a copy of the License.
 
 For installation instructions see the INSTALL file.
 
@@ -7,5 +19,3 @@ For information on changes to chatnut see the ChangeLog file.
 For information on the latest release see the NEWS file.
 
 For information on the authors and how to contact them see the AUTHORS file.
-
-For information on copying and redistributing chatnut see the COPYING file.
