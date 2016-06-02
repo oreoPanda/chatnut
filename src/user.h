@@ -1,5 +1,7 @@
 /*user.h*/
 
+/*This file is part of chatnut.*/
+
 /*Copyright (C) 2016 Jonas Fuglsang-Petersen*/
 
 /*chatnut is free software: you can redistribute it and/or modify
