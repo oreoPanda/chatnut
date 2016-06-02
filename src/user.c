@@ -36,6 +36,7 @@ extern void set_username(const char *name)
 {
 	if(name)
 	{
+		//TODO missing a free?
 		username = calloc( strlen(name)+1, sizeof(char) );
 		strncpy( username, name, strlen(name)+1 );
 	}

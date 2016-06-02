@@ -1,4 +1,4 @@
-/*connection.h*/
+/*logger.h*/
 
 /*Copyright (C) 2016 Jonas Fuglsang-Petersen*/
 
@@ -15,22 +15,23 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef CONNECTION_H_
-#define CONNECTION_H_
+#ifndef LOGGER_H_
+#define LOGGER_H_
 
-#include <glib.h>
+#include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-#define SUCCESS 1
-#define FAILURE 0
+extern void error(const char *cat, const char *msg);
+extern void logg(const char *cat, const char *msg);
+extern void warn(const char *cat, const char *msg);
 
-extern gboolean channel_not_null(void);
-extern gboolean read_line_from_channel(char **line);
-extern void write_to_channel(const gchar *buf, const char *username);
-extern void set_connection_data(const char *addr, unsigned short p);
-extern gboolean watch_connection(gpointer data);
-extern void cleanup_connection_data(void);
+extern void logger_init(void);
 
-#endif /* CONNECTION_H_ */
+extern void set_error(const char *filename);
+extern void set_log(const char *filename);
+extern void set_warn(const char *filename);
+
+extern void shutdown_logger(void);
+
+#endif			//LOGGER_H_
