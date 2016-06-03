@@ -1,16 +1,25 @@
 README first
 
-Description
+[Description]
 chatnut is a messaging program which allows you to connect and log in
 to a chatnut server and chat with your buddies.
 
-Licensing information
+[Licensing information]
 chatnut is licensed under version 3 of the GNU General Public License.
-The file COPYING contains a copy of the License.
+The file COPYING-GPLv3 contains a copy of the License.
 
-Libraries that chatnut uses with licensing information
-chatnut uses GTK+ which is licensed under the GNU Lesser General Public
-License. The file COPYING.LESSER contains a copy of the License.
+[Libraries with licensing information]
+chatnut uses GTK+ which is licensed under version 2.1 of the GNU
+Lesser General Public License. The file COPYING-LGPLv2.1 contains
+a copy of the License.
+
+[Icons and licensing information]
+chatnut uses the Adwaita icon theme for GTK+, which is licensed 
+either under version 3 of the GNU Lesser General Public License or 
+under the 
+Creative Commons Attribution-ShareAlike 3.0 Unported 
+License, which can be found at http://creativecommons.org/licenses/by-sa/3.0/.
+The file COPYING-CC contains this URI.
 
 For installation instructions see the INSTALL file.
 
