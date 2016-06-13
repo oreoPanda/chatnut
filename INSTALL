@@ -1,9 +1,9 @@
 Installation Instructions for Windows
 
 chatnut does not require any installation. Simply run chatnut.exe, which
-is located in the bin folder.
+is located in the exe folder.
 If you wish, you can create a shortcut on your desktop referring to
-chatnut.exe in the bin folder.
+chatnut.exe in the exe folder.
 
 In case you want to compile chatnut on your machine, you can use the Makefile
 in this directory. It assumes that you're using gcc as compiler, if you're not, 

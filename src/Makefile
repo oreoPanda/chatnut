@@ -26,11 +26,11 @@ libs_gtk = -LC:/msys64/mingw64/lib -lgtk-3 -lgdk-3 -lgdi32 -limm32 -lshell32 -lo
 
 chatnut: $(objects)
 	echo Linking $(objects)
-	gcc $(objects) -o ../bin/$@ $(libs) $(libs_gtk)
+	gcc $(objects) -o ../exe/$@ $(libs) $(libs_gtk)
 
 chatnut-debug: $(objects-debug)
 	echo Linking $(objects-debug)
-	gcc $(objects-debug) -o ../bin/$@ $(libs) $(libs_gtk)
+	gcc $(objects-debug) -o ../exe/$@ $(libs) $(libs_gtk)
 
 %.o: %.c
 	echo Compiling $<
