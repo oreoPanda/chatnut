@@ -115,50 +115,119 @@ extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data )
     int commandlen = 0;
     char *command = NULL;
     
-    if(!dialog || response_id != GTK_RESPONSE_OK || data)
+    if(!dialog || data)
     {
     	warn("GUI Callback", "Unexpected argument while processing login data");
     }
 
-	/*get elements inside the widgets content area, which is a GtkBox, which is a GtkContainer*/
-	GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
-	GList *elements = gtk_container_get_children(GTK_CONTAINER(content_area));
+    if(response_id == GTK_RESPONSE_OK)
+    {
+		/*get elements inside the widgets content area, which is a GtkBox, which is a GtkContainer*/
+		GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
+		GList *elements = gtk_container_get_children(GTK_CONTAINER(content_area));
 
-	GtkGrid *username_grid = elements->data;
-	elements = elements->next;
-	GtkGrid *password_grid = elements->data;
+		GtkGrid *username_grid = elements->data;
+		elements = elements->next;
+		GtkGrid *password_grid = elements->data;
 
-	GtkEntry *username_entry = GTK_ENTRY( gtk_grid_get_child_at(username_grid, 1, 0) );
-	GtkEntry *password_entry = GTK_ENTRY( gtk_grid_get_child_at(password_grid, 1, 0) );
+		GtkEntry *username_entry = GTK_ENTRY( gtk_grid_get_child_at(username_grid, 1, 0) );
+		GtkEntry *password_entry = GTK_ENTRY( gtk_grid_get_child_at(password_grid, 1, 0) );
 
-	//get text from entries
-	const char *username = gtk_entry_get_text(username_entry);
-	const char *password = gtk_entry_get_text(password_entry);
+		//get text from entries
+		const char *username = gtk_entry_get_text(username_entry);
+		const char *password = gtk_entry_get_text(password_entry);
 
-	/*create and send login command to server*/
-	commandlen = strlen("/login ")
-							+ strlen(username)
-							+ 1			//space
-							+ strlen(password)
-							+ 1;		//NULL
-	command = calloc( commandlen, sizeof(char) );
-	strncpy( command, "/login ", 8 );	//"/login " + NULL
-	strncat( command, username, strlen(username) );
-	strncat( command, " ", 1 );
-	strncat( command, password, strlen(password) );
+		/*create and send login command to server*/
+		commandlen = strlen("/login ")
+								+ strlen(username)
+								+ 1			//space
+								+ strlen(password)
+								+ 1;		//NULL
+		command = calloc( commandlen, sizeof(char) );
+		strncpy( command, "/login ", 8 );	//"/login " + NULL
+		strncat( command, username, strlen(username) );
+		strncat( command, " ", 1 );
+		strncat( command, password, strlen(password) );
 
-	//TODO test what happens here when server leaves while user types in username and password
-			//thought: server leaves, this command is written, G_IO_CHANNEL_HUNGUP gets emitted but not handled
-					//next thing that happens is a read with 0 (EOF), and client should work normally
-	//TODO for over-engineering, see function above
-	if( channel_not_null() )
-	{
-		write_to_channel( command, NULL );
-	}
+		//TODO test what happens here when server leaves while user types in username and password
+				//thought: server leaves, this command is written, G_IO_CHANNEL_HUNGUP gets emitted but not handled
+						//next thing that happens is a read with 0 (EOF), and client should work normally
+		//TODO for over-engineering, see function above
+		if( channel_not_null() )
+		{
+			write_to_channel( command, NULL );
+		}
 
-	free(command);
+		free(command);
+    }
+    else if(response_id == RESPONSE_REGISTER)
+    {
+    	popup_register();
+    }
+    else
+    {
+    	warn("GUI Callback", "Unexpected response from login dialog.");
+    }
 
     return G_SOURCE_CONTINUE;
+}
+
+extern gboolean Register( GtkDialog *dialog, gint response_id, gpointer data )
+{
+	int commandlen = 0;
+	char *command = NULL;
+
+	if(!dialog || data)
+	{
+		warn("GUI Callback", "Unexpected argument while processing registration data");
+	}
+
+	if(response_id == GTK_RESPONSE_OK)
+	{
+		/*get elements inside the widgets content area, which is a GtkBox, which is a GtkContainer*/
+		GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
+		GList *elements = gtk_container_get_children(GTK_CONTAINER(content_area));
+
+		GtkGrid *username_grid = elements->data;
+		elements = elements->next;
+		GtkGrid *password_grid = elements->data;
+
+		GtkEntry *username_entry = GTK_ENTRY( gtk_grid_get_child_at(username_grid, 1, 0) );
+		GtkEntry *password_entry = GTK_ENTRY( gtk_grid_get_child_at(password_grid, 1, 0) );
+
+		//get text from entries
+		const char *username = gtk_entry_get_text(username_entry);
+		const char *password = gtk_entry_get_text(password_entry);
+
+		/*create and send login command to server*/
+		commandlen = strlen("/register ")
+								+ strlen(username)
+								+ 1			//space
+								+ strlen(password)
+								+ 1;		//NULL
+		command = calloc( commandlen, sizeof(char) );
+		strncpy( command, "/register ", 11 );	//"/register " + NULL
+		strncat( command, username, strlen(username) );
+		strncat( command, " ", 1 );
+		strncat( command, password, strlen(password) );
+
+		//TODO test what happens here when server leaves while user types in username and password
+				//thought: server leaves, this command is written, G_IO_CHANNEL_HUNGUP gets emitted but not handled
+						//next thing that happens is a read with 0 (EOF), and client should work normally
+		//TODO for over-engineering, see function above
+		if( channel_not_null() )
+		{
+			write_to_channel( command, NULL );
+		}
+
+		free(command);
+	}
+	else
+	{
+		warn("GUI Callback", "Unexpected response from registration dialog.");
+	}
+
+	return G_SOURCE_CONTINUE;
 }
 
 //TODO error when /who fails

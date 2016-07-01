@@ -39,6 +39,7 @@ GtkWidget *window = NULL,
                 *button_add_contact = NULL;
 GtkWidget *dialog_add_contact = NULL,
                 *dialog_login = NULL,
+				*dialog_register = NULL,
                 *dialog_connect = NULL;
 
 gboolean input_view_enabled = FALSE;
@@ -504,6 +505,7 @@ extern void popup_login()
 	gtk_grid_attach(GTK_GRID(password_grid), password_label, 0, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(password_grid), password_entry_field, 1, 0, 1, 1);
 	gtk_box_pack_start( GTK_BOX(dialog_content_area), password_grid, FALSE, FALSE, 0 );
+	gtk_dialog_add_button( GTK_DIALOG(dialog_login), "Register now", RESPONSE_REGISTER );
 	gtk_dialog_add_button( GTK_DIALOG(dialog_login),  "Login", GTK_RESPONSE_OK );
 
 	/*connect the "response" signal*/
@@ -517,6 +519,72 @@ extern void popup_login()
 	gtk_widget_show(password_label);
 	gtk_widget_show(password_entry_field);
 	gtk_widget_show(dialog_login);
+
+	return;
+}
+
+extern void popup_register()
+{
+	GtkWidget *dialog_content_area = NULL,
+			*username_grid = NULL,
+			*username_label = NULL,
+			*username_entry_field = NULL,
+			*password_grid = NULL,
+			*password_label = NULL,
+			*password_entry_field = NULL;
+
+	/*dialog*/
+	dialog_register = gtk_dialog_new();
+	gtk_window_set_title(GTK_WINDOW(dialog_register), "Register");
+
+	gtk_window_set_transient_for(GTK_WINDOW(dialog_register), GTK_WINDOW(window) );
+	dialog_content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog_register));
+
+	/*username grid*/
+	username_grid = gtk_grid_new();
+	gtk_grid_set_column_spacing(GTK_GRID(username_grid), 10);
+
+	/*username label*/
+	username_label = gtk_label_new("Username:");
+	gtk_widget_set_hexpand(username_label, TRUE);
+	gtk_widget_set_halign(username_label, GTK_ALIGN_START);
+
+	/*username entry*/
+	username_entry_field = gtk_entry_new();
+
+	/*password grid*/
+	password_grid = gtk_grid_new();
+	gtk_grid_set_column_spacing(GTK_GRID(password_grid), 10);
+
+	/*password label*/
+	password_label = gtk_label_new("Password:");
+	gtk_widget_set_hexpand(password_label, TRUE);
+	gtk_widget_set_halign(password_label, GTK_ALIGN_START);
+
+	/*password entry*/
+	password_entry_field = gtk_entry_new();
+	gtk_entry_set_visibility(GTK_ENTRY(password_entry_field), FALSE);
+
+	/*pack*/
+	gtk_grid_attach(GTK_GRID(username_grid), username_label, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(username_grid), username_entry_field, 1, 0, 1, 1);
+	gtk_box_pack_start( GTK_BOX(dialog_content_area), username_grid, FALSE, FALSE, 0 );
+	gtk_grid_attach(GTK_GRID(password_grid), password_label, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(password_grid), password_entry_field, 1, 0, 1, 1);
+	gtk_box_pack_start( GTK_BOX(dialog_content_area), password_grid, FALSE, FALSE, 0 );
+	gtk_dialog_add_button( GTK_DIALOG(dialog_register),  "Register", GTK_RESPONSE_OK );
+
+	/*connect the "response" signal*/
+	g_signal_connect( GTK_DIALOG(dialog_register), "response", G_CALLBACK(Register), NULL );
+	g_signal_connect_swapped( GTK_DIALOG(dialog_register), "response", G_CALLBACK(gtk_widget_destroy), dialog_register);
+
+	gtk_widget_show(username_grid);
+	gtk_widget_show(username_label);
+	gtk_widget_show(username_entry_field);
+	gtk_widget_show(password_grid);
+	gtk_widget_show(password_label);
+	gtk_widget_show(password_entry_field);
+	gtk_widget_show(dialog_register);
 
 	return;
 }

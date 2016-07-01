@@ -47,8 +47,14 @@ extern void populate_window(void);
 extern void disable_add_contact_button(void);
 extern void enable_add_contact_button(void);
 
+enum
+{
+	RESPONSE_REGISTER
+};
+
 extern void popup_connect(void);
 extern void popup_login(void);
+extern void popup_register(void);
 extern void popup_add_contact(void);
 
 #endif /* GUI_H_ */
