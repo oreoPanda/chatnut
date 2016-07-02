@@ -375,6 +375,7 @@ extern gboolean watch_connection(gpointer eval_func)
 		}
 
 		/*this will only be done if connection is lost and channel is NULL*/
+		//FIXME sometimes int is used, sometimes socket_t
 		int sock = create_socket();
 		if( sock > 0 )
 		{

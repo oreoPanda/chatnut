@@ -283,6 +283,8 @@ extern void Register_cb(GtkDialog *dialog, gint response_id, gpointer data)
 			elements = elements->next;
 			password_grid = elements->data;
 
+			g_list_free(elements);
+
 			username_entry = GTK_ENTRY( gtk_grid_get_child_at(username_grid, 1, 0) );
 			password_entry = GTK_ENTRY( gtk_grid_get_child_at(password_grid, 1, 0) );
 
