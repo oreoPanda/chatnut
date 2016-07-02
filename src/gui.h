@@ -30,7 +30,7 @@ extern void create_history_scrollbox(void);
 extern void create_history_view(void);
 extern void create_input_scrollbox(void);
 extern void create_input_view(void);
-extern gboolean input_view_get_enabled(void);
+extern gboolean input_view_is_enabled(void);
 extern void enable_input_view(void);
 extern void disable_input_view(void);
 extern void clear_input_view(void);
@@ -49,8 +49,14 @@ extern void populate_window(void);
 extern void disable_add_contact_button(void);
 extern void enable_add_contact_button(void);
 
-extern void popup_connect(void);
-extern void popup_login(void);
+enum DialogResponseType
+{
+	RESPONSE_REGISTER
+};
+
+extern void popup_connect(const char *msg);
+extern void popup_login(const char *msg);
+extern void popup_register(void);
 extern void popup_add_contact(void);
 
 #endif /* GUI_H_ */

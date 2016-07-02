@@ -22,11 +22,13 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <gtk/gtk.h>
 
-extern gboolean connect_callback(GtkDialog *dialog, gint response_id, gpointer data);
-extern gboolean add_contact( GtkDialog *dialog, gint response_id, gpointer data );
-extern gboolean login( GtkDialog *dialog, gint response_id, gpointer data );
-extern void contact_selection_handler( GtkTreeView *treeview, GtkTreePath *treepath, GtkTreeViewColumn *column, gpointer data );
+extern void connect_cb(GtkDialog *dialog, gint response_id, gpointer data);
+extern void add_contact_cb(GtkDialog *dialog, gint response_id, gpointer data);
+extern void login_cb(GtkDialog *dialog, gint response_id, gpointer data);
+extern void Register_cb(GtkDialog *dialog, gint response_id, gpointer data);
+
+extern void contact_selection_cb( GtkTreeView *treeview, GtkTreePath *treepath, GtkTreeViewColumn *column, gpointer data );
 extern gboolean input_view_key_pressed_cb( GtkWidget *inputview, GdkEvent *event, gpointer data );
-extern gboolean add_contact_button_press(GtkButton *button, gpointer data);
+extern void add_contact_button_press_cb(GtkButton *button, gpointer data);
 
 #endif /* GUI_INTERACTION_H */

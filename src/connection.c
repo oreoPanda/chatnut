@@ -28,7 +28,6 @@ GIOChannel *channel = NULL;
 char *address = NULL;
 unsigned short port = 0;//TODO ok? what happens on port 0?
 gboolean connected = FALSE;		//only used by watch_connection and channel_in_handle
-gboolean waiting_for_data = FALSE;
 
 extern gboolean channel_not_null(void)
 {
@@ -316,15 +315,20 @@ static gboolean channel_in_handle( GIOChannel *source, GIOCondition condition, g
 
         if(read_status == SUCCESS)
         {
+        	/*evaluate the message*/
             evaluate( (const char *)buffer );
             g_free(buffer);
             return G_SOURCE_CONTINUE;
         }
         else
         {
+        	/*connection lost*/
             g_free(buffer);
             connected = FALSE;
             disable_add_contact_button();
+            disable_input_view();
+            /*try to reconnect once every second*/
+            g_timeout_add_seconds(1, watch_connection, eval_func);
             return G_SOURCE_REMOVE;
         }
 }
@@ -343,50 +347,66 @@ extern void set_connection_data(const char *addr, unsigned short p)
 
 extern gboolean watch_connection(gpointer eval_func)
 {
-	/*only do something if chatnut isn´t connected yet*/
-	if(!connected)
+	static gboolean waiting_for_data = FALSE;
+	static gboolean first_try = TRUE;
+
+	/*ask for server connection data (if it was not set yet) and return*/
+	if(!address)
 	{
-		/*ask for server connection data if it was not set yet*/
-		if(!address)
+		if(!waiting_for_data)
 		{
-			if(!waiting_for_data)
+			if(first_try)
 			{
-				popup_connect();
-				waiting_for_data = TRUE;
+				popup_connect("Enter server connection data here");
+			}
+			else
+			{
+				popup_connect("Connection attempt failed");
+			}
+			waiting_for_data = TRUE;
+		}
+
+		return G_SOURCE_CONTINUE;
+	}
+	/*or connection data was already set yet*/
+	else
+	{
+		if(channel)
+		{
+			shutdown_channel();
+			g_io_channel_unref(channel);
+			channel = NULL;
+		}
+
+		/*this will only be done if connection is lost and channel is NULL*/
+		//FIXME sometimes int is used, sometimes socket_t
+		int sock = create_socket();
+		if( sock > 0 )
+		{
+			connected = connect_socket(&sock, address, port);
+			if(connected)	//chatnut is now connected to a server
+			{
+				create_channel(sock);
+				g_io_add_watch(channel, G_IO_IN, channel_in_handle, eval_func);
+				return G_SOURCE_REMOVE;	//don't call this function again
+			}
+			else		//connection failed, ask for data again
+			{
+				free(address);
+				address = NULL;
+				port = 0;
+				waiting_for_data = FALSE;
+				first_try = FALSE;
+				close_socket(&sock);
+				return G_SOURCE_CONTINUE;
 			}
 		}
+		/*socket was not created correctly, try again*/
 		else
 		{
-			if(channel)
-			{
-				shutdown_channel();
-				g_io_channel_unref(channel);
-				channel = NULL;
-			}
-
-			/*this will only be done if connection is lost and channel is NULL*/
-			socket_t sock = create_socket();
-			if( sock > 0 )
-			{
-				connected = connect_socket(&sock, address, port);
-				if(connected)	//chatnut is now connected to a server
-				{
-					create_channel(sock);
-					g_io_add_watch( channel, G_IO_IN, channel_in_handle, eval_func );
-				}
-				else		//connection failed, ask for data again
-				{
-					free(address);
-					address = NULL;
-					port = 0;
-					waiting_for_data = FALSE;
-					close_socket(&sock);
-				}
-			}
+			return G_SOURCE_CONTINUE;
 		}
 	}
-
-	return G_SOURCE_CONTINUE;	//don't remove this event's source (for now). If you do, this function isn't called
 }
 
 /*free and reset connection data*/

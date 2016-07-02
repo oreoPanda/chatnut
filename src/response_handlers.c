@@ -26,7 +26,7 @@ along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
 extern void handle_buddy_is_set(void)
 {
-    if( input_view_get_enabled() == FALSE )
+    if(!input_view_is_enabled() )
     {
     	enable_input_view();
     }
@@ -34,9 +34,19 @@ extern void handle_buddy_is_set(void)
     return;
 }
 
+extern void handle_buddy_is_unset(void)
+{
+    if(input_view_is_enabled() )
+    {
+    	disable_input_view();
+    }
+
+    return;
+}
+
 extern void handle_lookup_success(const char *contact)
 {
-	if( add_contact_to_list(contact) )
+	if(add_contact_to_list(contact) )
 	{
 		add_contact_to_list_view(contact);
 	}
