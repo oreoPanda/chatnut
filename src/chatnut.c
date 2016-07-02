@@ -96,14 +96,14 @@ static void evaluate_incoming(const char *data)
 		{
 			logg("Server Reply", "Connected");
 
-			popup_login();
+			popup_login("Enter your login data here");
 			break;
 		}
 		case LOGIN_FAILURE:
 		{
 			logg("Server Reply", "Login failure");
 
-			popup_login();
+			popup_login("Login attempt failed");
 			break;
 		}
 		case LOGIN_SUCCESS:
@@ -121,13 +121,14 @@ static void evaluate_incoming(const char *data)
 		case BUDDY_IS_SET:
 		{
 			logg("Server Reply", "Buddy is now set");
-			enable_input_view();
+			handle_buddy_is_set();
 
 			break;
 		}
 		case BUDDY_IS_UNSET:
 		{
 			logg("Server Reply", "Buddy is now unset");
+			handle_buddy_is_unset();
 
 			break;
 		}
@@ -193,7 +194,7 @@ int main( int argc, char *argv[] )
 {
     gtk_init( &argc, &argv );
     logger_init();
-    g_timeout_add_seconds( 1, watch_connection, evaluate_incoming );	//TODO might be smart to stop this once connected and reinitiate this by connection breaks
+    g_timeout_add_seconds( 1, watch_connection, evaluate_incoming );
     if(enter_chatnut_directory() != 0 )
     {
         return EXIT_FAILURE;
