@@ -1,1 +1,15 @@
-First Release
+chatnut for Windows v0.9.3 (pre-release)
+	Released on Jul 2nd 2016
+Many small fixes to the pop-up dialogs and some gtk signals.
+
+chatnut for Windows v0.9.2 (pre-release)
+	Released on Jun 13th 2016
+Renamed a folder to solve a weird problem that caused v0.9.1 not to start.
+
+chatnut for Windows v0.9.1 (pre-release)
+	Released on Jun 3rd 2016
+Added the Adwaita icon theme.
+
+chatnut for Windows v0.9 (pre-release)
+	Released on Jun 2nd 2016
+This is the first release, messaging is possible, connecting to server is in testing stage.
