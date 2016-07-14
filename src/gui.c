@@ -448,12 +448,14 @@ extern void populate_window(void)
 
 extern void disable_add_contact_button(void)
 {
+	gtk_widget_set_sensitive(button_add_contact, FALSE);
 	g_signal_handler_block(button_add_contact, addcontactbuttonsignalid);
 	return;
 }
 
 extern void enable_add_contact_button(void)
 {
+	gtk_widget_set_sensitive(button_add_contact, TRUE);
 	g_signal_handler_unblock(button_add_contact, addcontactbuttonsignalid);
 	return;
 }
