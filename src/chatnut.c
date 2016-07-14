@@ -15,6 +15,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with chatnut.  If not, see <http://www.gnu.org/licenses/>.*/
 
+/*TODO FIXME TODO FIXME logo: squirrel that cracks a nut, a speech bubble pops out of the nut. Drawback: no chestnut... (name change??)*/
+//or 2 squirrels with one chestnut each, they throw them which messages written on it    //conflict, not open-source like...
+//or they pull on two sides of one chestnut
+//maybe something not scene-like
+
 #include <stdlib.h>
 #include <string.h>
 
