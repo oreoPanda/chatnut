@@ -84,7 +84,7 @@ static void create_gui(void)
 
 	return;
 }
-
+//TODO handle a registration failure (pop up the dialog again)
 static void evaluate_incoming(const char *data)
 {
 	commandreply indicator = *data;
