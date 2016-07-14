@@ -118,6 +118,13 @@ static void evaluate_incoming(const char *data)
 
 			break;
 		}
+		case REGISTRATION_SUCCESS:
+		{
+			logg("Server reply", "Registration success");
+			popup_login("Enter your login data here");
+
+			break;
+		}
 		case BUDDY_IS_SET:
 		{
 			logg("Server Reply", "Buddy is now set");
