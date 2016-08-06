@@ -89,7 +89,7 @@ static void create_gui(void)
 
 	return;
 }
-
+//TODO handle a registration failure (pop up the dialog again)
 static void evaluate_incoming(const char *data)
 {
 	commandreply indicator = *data;
@@ -120,6 +120,13 @@ static void evaluate_incoming(const char *data)
 			strip_buddyname( message, &buddyname );//return value (which should net be free()d) ignored, username should be free()d
 			handle_login_success(buddyname);
 			free(buddyname);
+
+			break;
+		}
+		case REGISTRATION_SUCCESS:
+		{
+			logg("Server reply", "Registration success");
+			popup_login("Enter your login data here");
 
 			break;
 		}

@@ -46,5 +46,5 @@ clean:
 	rm -f *~
 
 # $@: target
-# @<: first prerequisite
+# $<: first prerequisite
 #  %: any string (%.o is any string with ending.o)

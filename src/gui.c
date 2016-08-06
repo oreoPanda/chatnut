@@ -209,7 +209,8 @@ extern void append_to_history_view( const char *buffer, const char *sender )
 	else
 	{
 		to_append = calloc( strlen(sender) + 2 + strlen(buffer) + 1, sizeof(char) );
-		strncpy( to_append, sender, strlen(sender) );
+		strncpy( to_append, sender, strlen(sender)+1 );//TODO there was no +1 at first, that's not good or? (~10 lines above there was +1)
+		strncat( to_append, ": ", strlen(": ") );
 		strncat( to_append, buffer, strlen(buffer) );
 	}
 	gtk_text_buffer_get_end_iter( historybuffer, &end );
@@ -447,12 +448,14 @@ extern void populate_window(void)
 
 extern void disable_add_contact_button(void)
 {
+	gtk_widget_set_sensitive(button_add_contact, FALSE);
 	g_signal_handler_block(button_add_contact, addcontactbuttonsignalid);
 	return;
 }
 
 extern void enable_add_contact_button(void)
 {
+	gtk_widget_set_sensitive(button_add_contact, TRUE);
 	g_signal_handler_unblock(button_add_contact, addcontactbuttonsignalid);
 	return;
 }
